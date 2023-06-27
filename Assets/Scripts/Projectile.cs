@@ -3,19 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Projectile : MonoBehaviour
-{
+public class Projectile : MonoBehaviour {
 	public Tilemap ground;
 	public float totSteps = 10;
 	public float animationTime = 0.5f;
 	public Vector2 direction;
+	public float spawnOffset;
 
-	private float oneStepDistance;
-	private float timeBetweenSteps;
+	private Rigidbody2D rb;
+	private bool isfirstMovement = true;
 
 	private void Awake() {
-		timeBetweenSteps = animationTime / totSteps;
-		oneStepDistance = 1 / totSteps;
+		rb = GetComponent<Rigidbody2D>();
 	}
 
 	private void Start() {
@@ -35,10 +34,15 @@ public class Projectile : MonoBehaviour
 	}
 
 	private IEnumerator MoveBySteps() {
-		for (int i = 0; i < totSteps; i++) {
-			transform.position += (Vector3)direction * oneStepDistance;
-			yield return new WaitForSeconds(timeBetweenSteps);
+		rb.velocity = direction / animationTime;
+		if (isfirstMovement) {
+			yield return new WaitForSeconds(animationTime - spawnOffset);
+			isfirstMovement = false;
 		}
+		else {
+			yield return new WaitForSeconds(animationTime);
+		}
+		rb.velocity = Vector2.zero;
 
 		if (IsStillInCurve())
 			StartCoroutine(MoveBySteps());
@@ -147,5 +151,13 @@ public class Projectile : MonoBehaviour
 		}
 
 		return false;
+	}
+
+	private void OnCollisionEnter2D(Collision2D collision) {
+		if (collision.gameObject.CompareTag("Player")) {
+			Debug.Log("Dead");
+		}
+
+		Destroy(gameObject);
 	}
 }

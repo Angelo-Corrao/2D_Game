@@ -11,6 +11,8 @@ public class Shoot : MonoBehaviour {
 	private PlayerInput playerInput;
 	private CarAnimation carAnimation;
 	private bool canShoot = true;
+	// This must have a single decimal value
+	private float spawnOffset = 0.4f;
 
 	private void Awake() {
 		carAnimation = GetComponent<CarAnimation>();
@@ -33,9 +35,11 @@ public class Shoot : MonoBehaviour {
 	private IEnumerator Fire(Vector2 direction) {
 		RotateCar(direction);
 
-		GameObject proj = Instantiate(projectilePrefab, carMovement.transform.position, Quaternion.identity);
-		proj.GetComponent<Projectile>().direction = direction;
-		proj.GetComponent<Projectile>().ground = ground;
+		Vector3 spawnPoint = carMovement.transform.position + ((Vector3)direction * spawnOffset);
+		Projectile proj = Instantiate(projectilePrefab, spawnPoint, Quaternion.identity).GetComponent<Projectile>();
+		proj.direction = direction;
+		proj.ground = ground;
+		proj.spawnOffset = spawnOffset;
 
 		canShoot = false;
 		yield return new WaitForSeconds(fireRate);
@@ -60,9 +64,9 @@ public class Shoot : MonoBehaviour {
 			targetDirection = "left";
 		}
 
-		carAnimation.Animate(carMovement.startingOrientation, targetDirection, direction, false);
+		carAnimation.Animate(carMovement.startingOrientation, targetDirection, direction);
 		carMovement.startingOrientation = targetDirection;
 		if (carMovement.isMoving)
-			carAnimation.hasShootAfterMoved = true;
+			carMovement.hasShootAfterMoved = true;
 	}
 }

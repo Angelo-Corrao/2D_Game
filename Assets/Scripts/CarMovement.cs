@@ -9,6 +9,7 @@ public class CarMovement : MonoBehaviour
 	public Sprite[] spriteOrientations;
 	public string startingOrientation = "up";
 	public bool isMoving = false;
+	public bool hasShootAfterMoved = false;
 
 	private PlayerInput playerInput;
 	private Vector2 direction;
@@ -16,8 +17,11 @@ public class CarMovement : MonoBehaviour
 	private bool checkCurve = false;
 	private CarAnimation carAnimation;
 	private bool hasMovedInSameDirection;
+	private Rigidbody2D rb;
+	private float moveDuration = 0.5f;
 
 	private void Awake() {
+		rb = GetComponent<Rigidbody2D>();
 		carAnimation = GetComponent<CarAnimation>();
 
 		playerInput = new PlayerInput();
@@ -41,31 +45,33 @@ public class CarMovement : MonoBehaviour
 
 	private void Move(Vector3Int nextGridPosition) {
 		isMoving = true;
-		carAnimation.hasShootAfterMoved = false;
+		hasShootAfterMoved = false;
 		fogOfWar.SetTile(nextGridPosition, null);
 
 		if (direction.x == 0) {
 			if (direction.y == 1) {
 				previousDirection = "up";
 				if (carAnimation != null)
-					carAnimation.Animate(startingOrientation, previousDirection, direction, true);
+					carAnimation.Animate(startingOrientation, previousDirection, direction);
 			}
 			else {
 				previousDirection = "down";
 				if (carAnimation != null)
-					carAnimation.Animate(startingOrientation, previousDirection, direction, true);
+					carAnimation.Animate(startingOrientation, previousDirection, direction);
 			}
 		}
 		else if (direction.x == 1) {
 			previousDirection = "right";
 			if (carAnimation != null)
-				carAnimation.Animate(startingOrientation, previousDirection, direction, true);
+				carAnimation.Animate(startingOrientation, previousDirection, direction);
 		}
 		else {
 			previousDirection = "left";
 			if (carAnimation != null)
-				carAnimation.Animate(startingOrientation, previousDirection, direction, true);
+				carAnimation.Animate(startingOrientation, previousDirection, direction);
 		}
+
+		StartCoroutine(ReachNextCell());
 
 		/*
 		 * previousDirection is changed when the car starts to move so here i can check if it has moved in same
@@ -83,10 +89,17 @@ public class CarMovement : MonoBehaviour
 		}
 	}
 
+	private IEnumerator ReachNextCell() {
+		rb.velocity = direction / moveDuration;
+		yield return new WaitForSeconds(moveDuration);
+		rb.velocity = Vector2.zero;
+		SetStartingOrientation();
+		isMoving = false;
+	}
+
 	private void CanMove() {
 		if (isMoving)
 			return;
-
 		Vector3Int actualGridPosition = ground.WorldToCell(transform.position);
 		Vector3Int nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
 
@@ -209,7 +222,7 @@ public class CarMovement : MonoBehaviour
 		}
 	}
 
-	public void AnimationFinished(bool hasShootAfterMoved) {
+	public void SetStartingOrientation() {
 		// This checks resolves a bug related to the animation if the player shoots after he moved
 		if (!hasShootAfterMoved)
 			startingOrientation = previousDirection;
@@ -221,6 +234,5 @@ public class CarMovement : MonoBehaviour
 		else if (!hasMovedInSameDirection) { // se ho sparato dopo essermi mosso e non mi sono mosso nella stessa direzione in cui la macchina puntava
 			startingOrientation = previousDirection;
 		}
-		isMoving = false;
 	}
 }
