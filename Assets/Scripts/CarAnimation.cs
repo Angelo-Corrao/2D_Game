@@ -7,7 +7,8 @@ public class CarAnimation : MonoBehaviour
 	public float totSteps = 10;
 	public float animationTime = 0.5f;
 	public float oneStepDistance = 0.1f;
-	public UnityEvent animationFinished;
+	public bool hasShootAfterMoved = false;
+	public UnityEvent<bool> animationFinished;
 
 	private float timeBetweenSteps;
 	private Animator animator;
@@ -18,7 +19,7 @@ public class CarAnimation : MonoBehaviour
 	}
 
 	// Starts the right animation based on the starting orientation of the car when the player move and the direction he wants to move
-	public void Animate(string startingOrientation, string targetDirection, Vector2 direction) {
+	public void Animate(string startingOrientation, string targetDirection, Vector2 direction, bool hasToMove) {
 		string animationToStop = "";
 		switch (targetDirection) {
 			case "up":
@@ -96,15 +97,21 @@ public class CarAnimation : MonoBehaviour
 						break;
 				}
 				break;
+
+			default:
+				hasShootAfterMoved = true;
+				break;
 		}
 
-		StartCoroutine(MoveBySteps(direction, oneStepDistance, timeBetweenSteps, animationToStop,
-								   startingOrientation, targetDirection));
+		// If the player shoots the car doesn't need to move to another cell
+		if (hasToMove)
+			StartCoroutine(MoveBySteps(direction, animationToStop, startingOrientation, targetDirection));
+		else
+			StartCoroutine(StopAnimation(animationToStop));
 	}
 
 	// Moves the car by little steps instead of teleporting it
-	private IEnumerator MoveBySteps(Vector2 direction, float oneStepDistance, float timeBetweenSteps,
-									string animationToStop, string startingOrientation, string targetDirection) {
+	private IEnumerator MoveBySteps(Vector2 direction, string animationToStop, string startingOrientation, string targetDirection) {
 		for (int i = 0; i < totSteps; i++) {
 			transform.position += (Vector3)direction * oneStepDistance;
 			yield return new WaitForSeconds(timeBetweenSteps);
@@ -113,6 +120,12 @@ public class CarAnimation : MonoBehaviour
 		if (animationToStop != "")
 			animator.SetBool(animationToStop, false);
 
-		animationFinished?.Invoke();
+		animationFinished?.Invoke(hasShootAfterMoved);
+	}
+
+	private IEnumerator StopAnimation(string animationToStop) {
+		yield return new WaitForSeconds(animationTime);
+		if (animationToStop != "")
+			animator.SetBool(animationToStop, false);
 	}
 }
