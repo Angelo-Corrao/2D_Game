@@ -6,12 +6,12 @@ public class Shoot : MonoBehaviour {
 	public float fireRate = 1f;
 	public CarMovement carMovement;
 	public GameObject projectilePrefab;
-	public Tilemap ground;
+	public Tilemap road;
 
 	private PlayerInput playerInput;
 	private CarAnimation carAnimation;
 	private bool canShoot = true;
-	// This must have a single decimal value
+	// Must have a single decimal value
 	private float spawnOffset = 0.4f;
 
 	private void Awake() {
@@ -19,7 +19,8 @@ public class Shoot : MonoBehaviour {
 		playerInput = new PlayerInput();
 
 		playerInput.Car.Shoot.performed += ctx => {
-			if (canShoot)
+			// To avoid undesidered behaviours it's not possible to shoot while the car is moving
+			if (canShoot && !carMovement.isMoving)
 				StartCoroutine(Fire(ctx.ReadValue<Vector2>()));
 		};
 	}
@@ -35,10 +36,11 @@ public class Shoot : MonoBehaviour {
 	private IEnumerator Fire(Vector2 direction) {
 		RotateCar(direction);
 
+		// Spawn the projectile with an offset from the car so it doesn't collide with it
 		Vector3 spawnPoint = carMovement.transform.position + ((Vector3)direction * spawnOffset);
 		Projectile proj = Instantiate(projectilePrefab, spawnPoint, Quaternion.identity).GetComponent<Projectile>();
 		proj.direction = direction;
-		proj.ground = ground;
+		proj.road = road;
 		proj.spawnOffset = spawnOffset;
 
 		canShoot = false;
@@ -66,7 +68,5 @@ public class Shoot : MonoBehaviour {
 
 		carAnimation.Animate(carMovement.startingOrientation, targetDirection, direction);
 		carMovement.startingOrientation = targetDirection;
-		if (carMovement.isMoving)
-			carMovement.hasShootAfterMoved = true;
 	}
 }

@@ -1,20 +1,23 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public class Projectile : MonoBehaviour {
-	public Tilemap ground;
+	public Tilemap road;
 	public float totSteps = 10;
 	public float animationTime = 0.5f;
 	public Vector2 direction;
 	public float spawnOffset;
 
-	private Rigidbody2D rb;
+	private float oneStepDistance;
+	private float timeBetweenSteps;
 	private bool isfirstMovement = true;
+	private float defaultTotSteps;
 
 	private void Awake() {
-		rb = GetComponent<Rigidbody2D>();
+		defaultTotSteps = totSteps;
+		timeBetweenSteps = animationTime / totSteps;
+		oneStepDistance = 1 / totSteps;
 	}
 
 	private void Start() {
@@ -34,25 +37,32 @@ public class Projectile : MonoBehaviour {
 	}
 
 	private IEnumerator MoveBySteps() {
-		rb.velocity = direction / animationTime;
+		/*
+		 * Because the projectile doesn't spawn at the center of the tile to avoid collision with car,
+		 * the first time we'll need less steps to reach the next tile based on the spawn offset
+		 */
 		if (isfirstMovement) {
-			yield return new WaitForSeconds(animationTime - spawnOffset);
+			totSteps = totSteps - spawnOffset * 10;
 			isfirstMovement = false;
 		}
-		else {
-			yield return new WaitForSeconds(animationTime);
+		else
+			totSteps = defaultTotSteps;
+
+		// Move the projectile by little steps instead of teleporting it
+		for (int i = 0; i < totSteps; i++) {
+			transform.position += (Vector3)direction * oneStepDistance;
+			yield return new WaitForSeconds(timeBetweenSteps);
 		}
-		rb.velocity = Vector2.zero;
 
 		if (IsStillInCurve())
 			StartCoroutine(MoveBySteps());
 		else {
-			Vector3Int actualGridPosition = ground.WorldToCell(transform.position);
+			Vector3Int actualGridPosition = road.WorldToCell(transform.position);
 			/*
 			 * Check if at the end of a curve there is a tile or not
 			 * If not this avoid the game to crush but with the full map this should not happen
 			 */
-			if (ground.GetTile(actualGridPosition) != null)
+			if (road.GetTile(actualGridPosition) != null)
 				Move();
 			else
 				Destroy(gameObject);
@@ -60,11 +70,10 @@ public class Projectile : MonoBehaviour {
 	}
 
 	private bool CanMove() {
-		Vector3Int actualGridPosition = ground.WorldToCell(transform.position);
-		Vector3Int nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+		Vector3Int actualGridPosition = road.WorldToCell(transform.position);
+		Vector3Int nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 
-		// This make impossible to shoot in a curve because curves are not a case in this switch
-		switch (ground.GetTile(actualGridPosition).name) {
+		switch (road.GetTile(actualGridPosition).name) {
 			case "roadNEWS":
 				// Here the player can shoot in any direction
 				if (isCellNotEmpty(nextGridPosition))
@@ -91,10 +100,10 @@ public class Projectile : MonoBehaviour {
 		return false;
 	}
 
-	// Check if exist a tile in the ground tilemap in the direction the player want to shoot
+	// Check if exist a tile in the road tilemap in the direction the player want to shoot
 	private bool isCellNotEmpty(Vector3Int nextGridPosition) {
 		// The second check is nedeed so the player can't shoot diagonally
-		if (ground.HasTile(nextGridPosition) && direction.magnitude <= 1)
+		if (road.HasTile(nextGridPosition) && direction.magnitude <= 1)
 			return true;
 		else
 			return false;
@@ -103,12 +112,12 @@ public class Projectile : MonoBehaviour {
 	// Change the projectile's direction after it comes out of a curve, if it's still in a curve, based on the direction from which it comes
 	public bool IsStillInCurve() {
 		Vector3Int actualGridPosition;
-		actualGridPosition = ground.WorldToCell(transform.position);
+		actualGridPosition = road.WorldToCell(transform.position);
 
-		if (ground.GetTile(actualGridPosition) == null)
+		if (road.GetTile(actualGridPosition) == null)
 			return false;
 
-		switch (ground.GetTile(actualGridPosition).name) {
+		switch (road.GetTile(actualGridPosition).name) {
 			case "roadNE":
 				if (direction.x == -1) {
 					direction = new Vector2(0, 1);

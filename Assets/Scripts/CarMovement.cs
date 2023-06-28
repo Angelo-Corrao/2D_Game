@@ -2,32 +2,34 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class CarMovement : MonoBehaviour
-{
-	public Tilemap ground;
+public class CarMovement : MonoBehaviour {
+	public Tilemap road;
 	public Tilemap fogOfWar;
-	public Sprite[] spriteOrientations;
+	[Tooltip ("Is applied only when the game starts")]
+	public float animationTime = 0.5f;
 	public string startingOrientation = "up";
 	public bool isMoving = false;
-	public bool hasShootAfterMoved = false;
 
 	private PlayerInput playerInput;
 	private Vector2 direction;
 	private string previousDirection = "";
 	private bool checkCurve = false;
 	private CarAnimation carAnimation;
-	private bool hasMovedInSameDirection;
-	private Rigidbody2D rb;
-	private float moveDuration = 0.5f;
+	private float totSteps = 10;
+	private float oneStepDistance;
+	private float timeBetweenSteps;
 
 	private void Awake() {
-		rb = GetComponent<Rigidbody2D>();
+		timeBetweenSteps = animationTime / totSteps;
+		oneStepDistance = 1 / totSteps;
 		carAnimation = GetComponent<CarAnimation>();
 
 		playerInput = new PlayerInput();
 		playerInput.Car.Movement.performed += ctx => {
-			direction = ctx.ReadValue<Vector2>();
-			CanMove();
+			if (!isMoving) {
+				direction = ctx.ReadValue<Vector2>();
+				CanMove();
+			}
 		};
 	}
 
@@ -45,7 +47,6 @@ public class CarMovement : MonoBehaviour
 
 	private void Move(Vector3Int nextGridPosition) {
 		isMoving = true;
-		hasShootAfterMoved = false;
 		fogOfWar.SetTile(nextGridPosition, null);
 
 		if (direction.x == 0) {
@@ -73,15 +74,6 @@ public class CarMovement : MonoBehaviour
 
 		StartCoroutine(ReachNextCell());
 
-		/*
-		 * previousDirection is changed when the car starts to move so here i can check if it has moved in same
-		 * direction it was pointing
-		 */
-		if (startingOrientation == previousDirection)
-			hasMovedInSameDirection = true;
-		else
-			hasMovedInSameDirection = false;
-
 		// If The animation script is not attached to the gameObject the car will be teleported instead of being animated
 		if (carAnimation == null) {
 			transform.position += (Vector3)direction;
@@ -89,22 +81,23 @@ public class CarMovement : MonoBehaviour
 		}
 	}
 
+	// Move the car by little steps instead of teleporting it
 	private IEnumerator ReachNextCell() {
-		rb.velocity = direction / moveDuration;
-		yield return new WaitForSeconds(moveDuration);
-		rb.velocity = Vector2.zero;
-		SetStartingOrientation();
+		for (int i = 0; i < totSteps; i++) {
+			transform.position += (Vector3)direction * oneStepDistance;
+			yield return new WaitForSeconds(timeBetweenSteps);
+		}
+
+		startingOrientation = previousDirection;
 		isMoving = false;
 	}
 
 	private void CanMove() {
-		if (isMoving)
-			return;
-		Vector3Int actualGridPosition = ground.WorldToCell(transform.position);
-		Vector3Int nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+		Vector3Int actualGridPosition = road.WorldToCell(transform.position);
+		Vector3Int nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 
 		// Check if the direction the player want to move is valid based on the tile he's on
-		switch (ground.GetTile(actualGridPosition).name) {
+		switch (road.GetTile(actualGridPosition).name) {
 			case "roadNEWS":
 				// Here the player can move in any direction
 				if (isCellNotEmpty(nextGridPosition))
@@ -132,17 +125,17 @@ public class CarMovement : MonoBehaviour
 		checkCurve = true;
 	}
 
-	// Check if exist a tile in the ground tilemap in the direction the player want to move
+	// Check if exist a tile in the road tilemap in the direction the player want to move
 	private bool isCellNotEmpty(Vector3Int nextGridPosition) {
 		// The second check is nedeed so the player can't move diagonally
-		if (ground.HasTile(nextGridPosition) && direction.magnitude <= 1)
+		if (road.HasTile(nextGridPosition) && direction.magnitude <= 1)
 			return true;
 		else
 			return false;
 	}
 
 	/*
-	 * Mangage the player position if he is in a curve (tunnel) after he moved
+	 * Mangage the player position if he is in a curve after he moved
 	 * The player is moved in another cell based on the direction from which it comes
 	 * When it will no longer be in a curve the loop will end
 	 */
@@ -151,18 +144,18 @@ public class CarMovement : MonoBehaviour
 		if (checkCurve && !isMoving) {
 			Vector3Int actualGridPosition;
 			Vector3Int nextGridPosition;
-			actualGridPosition = ground.WorldToCell(transform.position);
-			switch (ground.GetTile(actualGridPosition).name) {
+			actualGridPosition = road.WorldToCell(transform.position);
+			switch (road.GetTile(actualGridPosition).name) {
 				case "roadNE":
 					if (previousDirection == "down") {
 						direction = new Vector2(1, 0);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "right";
 					}
 					else {
 						direction = new Vector2(0, 1);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "up";
 					}
@@ -171,13 +164,13 @@ public class CarMovement : MonoBehaviour
 				case "roadNW":
 					if (previousDirection == "down") {
 						direction = new Vector2(-1, 0);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "left";
 					}
 					else {
 						direction = new Vector2(0, 1);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "up";
 					}
@@ -186,13 +179,13 @@ public class CarMovement : MonoBehaviour
 				case "roadSE":
 					if (previousDirection == "up") {
 						direction = new Vector2(1, 0);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "right";
 					}
 					else {
 						direction = new Vector2(0, -1);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "down";
 					}
@@ -201,38 +194,24 @@ public class CarMovement : MonoBehaviour
 				case "roadSW":
 					if (previousDirection == "up") {
 						direction = new Vector2(-1, 0);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "left";
 					}
 					else {
 						direction = new Vector2(0, -1);
-						nextGridPosition = ground.WorldToCell(transform.position + (Vector3)direction);
+						nextGridPosition = road.WorldToCell(transform.position + (Vector3)direction);
 						Move(nextGridPosition);
 						previousDirection = "down";
 					}
 					break;
 			}
 
-			if (ground.GetTile(actualGridPosition).name != "roadNE" &&
-				ground.GetTile(actualGridPosition).name != "roadNW" &&
-				ground.GetTile(actualGridPosition).name != "roadSE" &&
-				ground.GetTile(actualGridPosition).name != "roadSW")
+			if (road.GetTile(actualGridPosition).name != "roadNE" &&
+				road.GetTile(actualGridPosition).name != "roadNW" &&
+				road.GetTile(actualGridPosition).name != "roadSE" &&
+				road.GetTile(actualGridPosition).name != "roadSW")
 				checkCurve = false;
-		}
-	}
-
-	public void SetStartingOrientation() {
-		// This checks resolves a bug related to the animation if the player shoots after he moved
-		if (!hasShootAfterMoved)
-			startingOrientation = previousDirection;
-		/*
-		 * If the player shoots after he moved and he didn't move in the same direction the car was pointing
-		 * i make the carMovement save the starting orientation for the next time he move
-		 * This is also related at the same animation bug
-		 */
-		else if (!hasMovedInSameDirection) { // se ho sparato dopo essermi mosso e non mi sono mosso nella stessa direzione in cui la macchina puntava
-			startingOrientation = previousDirection;
 		}
 	}
 }
