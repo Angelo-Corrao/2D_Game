@@ -119,6 +119,38 @@ public class CarMovement : MonoBehaviour {
 						Move(nextGridPosition);
 				}
 				break;
+
+			case "roadNEW":
+				// The player can move in any direction except south
+				if (direction.y == 0 || direction.y == 1) {
+					if (isCellNotEmpty(nextGridPosition))
+						Move(nextGridPosition);
+				}
+				break;
+
+			case "roadEWS":
+				// The player can move in any direction except north
+				if (direction.y == 0 || direction.y == -1) {
+					if (isCellNotEmpty(nextGridPosition))
+						Move(nextGridPosition);
+				}
+				break;
+
+			case "roadNES":
+				// The player can move in any direction except west
+				if (direction.x == 0 || direction.x == 1) {
+					if (isCellNotEmpty(nextGridPosition))
+						Move(nextGridPosition);
+				}
+				break;
+
+			case "roadNWS":
+				// The player can move in any direction except est
+				if (direction.x == 0 || direction.x == -1) {
+					if (isCellNotEmpty(nextGridPosition))
+						Move(nextGridPosition);
+				}
+				break;
 		}
 
 		// This is nedeed so we can check if the player has landed in a curve

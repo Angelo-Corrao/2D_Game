@@ -54,7 +54,7 @@ public class Projectile : MonoBehaviour {
 			yield return new WaitForSeconds(timeBetweenSteps);
 		}
 
-		if (IsStillInCurve())
+		if (IsInCurve())
 			StartCoroutine(MoveBySteps());
 		else {
 			Vector3Int actualGridPosition = road.WorldToCell(transform.position);
@@ -95,6 +95,38 @@ public class Projectile : MonoBehaviour {
 						return true;
 				}
 				break;
+
+			case "roadNEW":
+				if (direction.y == 0 || direction.y == 1) {
+					// The player can shoot in any direction except south
+					if (isCellNotEmpty(nextGridPosition))
+						return true;
+				}
+				break;
+
+			case "roadEWS":
+				// The player can shoot in any direction except north
+				if (direction.y == 0 || direction.y == -1) {
+					if (isCellNotEmpty(nextGridPosition))
+						return true;
+				}
+				break;
+
+			case "roadNES":
+				// The player can shoot in any direction except west
+				if (direction.x == 0 || direction.x == 1) {
+					if (isCellNotEmpty(nextGridPosition))
+						return true;
+				}
+				break;
+
+			case "roadNWS":
+				// The player can shoot in any direction except est
+				if (direction.x == 0 || direction.x == -1) {
+					if (isCellNotEmpty(nextGridPosition))
+						return true;
+				}
+				break;
 		}
 
 		return false;
@@ -109,8 +141,8 @@ public class Projectile : MonoBehaviour {
 			return false;
 	}
 
-	// Change the projectile's direction after it comes out of a curve, if it's still in a curve, based on the direction from which it comes
-	public bool IsStillInCurve() {
+	// Change the projectile's direction if it's in a curve, based on the direction from which it comes
+	public bool IsInCurve() {
 		Vector3Int actualGridPosition;
 		actualGridPosition = road.WorldToCell(transform.position);
 
@@ -157,9 +189,159 @@ public class Projectile : MonoBehaviour {
 					direction = new Vector2(-1, 0);
 					return true;
 				}
+
+			case "roadNEW":
+				if (CanMove())
+					return true;
+				else {
+					// if the projectile comes from the North
+					if (direction.y == -1) {
+						ThreeDirectionBehaviour(Vector3.right, Vector3.left);
+						return true;
+					}
+					// if the projectile comes from the Est
+					else if (direction.x == -1) {
+						ThreeDirectionBehaviour(Vector3.up, Vector3.left);
+						return true;
+					}
+					// if the projectile comes from the West
+					else if (direction.x == 1) {
+						ThreeDirectionBehaviour(Vector3.up, Vector3.right);
+						return true;
+					}
+					else {
+						return true;
+					}
+				}
+
+			case "roadEWS":
+				if (CanMove())
+					return true;
+				else {
+					// if the projectile comes from the South
+					if (direction.y == 1) {
+						ThreeDirectionBehaviour(Vector3.right, Vector3.left);
+						return true;
+					}
+					// if the projectile comes from the Est
+					else if (direction.x == -1) {
+						ThreeDirectionBehaviour(Vector3.down, Vector3.left);
+						return true;
+					}
+					// if the projectile comes from the West
+					else if (direction.x == 1) {
+						ThreeDirectionBehaviour(Vector3.right, Vector3.down);
+						return true;
+					}
+					else {
+						return true;
+					}
+				}
+
+			case "roadNES":
+				if (CanMove())
+					return true;
+				else {
+					// if the projectile comes from the Est
+					if (direction.x == -1) {
+						ThreeDirectionBehaviour(Vector3.up, Vector3.down);
+						return true;
+					}
+					// if the projectile comes from the North
+					else if (direction.y == -1) {
+						ThreeDirectionBehaviour(Vector3.right, Vector3.down);
+						return true;
+					}
+					// if the projectile comes from the South
+					else if (direction.y == 1) {
+						ThreeDirectionBehaviour(Vector3.right, Vector3.up);
+						return true;
+					}
+					else {
+						return true;
+					}
+				}
+
+			case "roadNWS":
+				if (CanMove())
+					return true;
+				else {
+					// if the projectile comes from the West
+					if (direction.x == 1) {
+						ThreeDirectionBehaviour(Vector3.up, Vector3.down);
+						return true;
+					}
+					// if the projectile comes from the North
+					else if (direction.y == -1) {
+						ThreeDirectionBehaviour(Vector3.left, Vector3.down);
+						return true;
+					}
+					// if the projectile comes from the South
+					else if (direction.y == 1) {
+						ThreeDirectionBehaviour(Vector3.up, Vector3.left);
+						return true;
+					}
+					else {
+						return true;
+					}
+				}
 		}
 
 		return false;
+	}
+
+	/*
+	 * If the projectile is in a tile with three directions check first if the projectile can continue it's trajectory, if not,
+	 * check if there is a curve next to it in the directions opposite from where it comes from, so the projectile will go in it's direction.
+	 * If it's next to two curves move it in a random direction between the two.
+	 * If it can't continue it's trajectory and it hasn't any curve next to it return false so it will be destroyed.
+	 */
+	private bool ThreeDirectionBehaviour(Vector3 direction1, Vector3 direction2) {
+		if (CanMove())
+			return true;
+		else {
+			Vector3Int nextGridPosition = road.WorldToCell(transform.position + direction1);
+			if (road.GetTile(nextGridPosition).name == "roadNE" ||
+				road.GetTile(nextGridPosition).name == "roadNW" ||
+				road.GetTile(nextGridPosition).name == "roadSE" ||
+				road.GetTile(nextGridPosition).name == "roadSW") {
+				nextGridPosition = road.WorldToCell(transform.position + direction2);
+				if (road.GetTile(nextGridPosition).name == "roadNE" ||
+				road.GetTile(nextGridPosition).name == "roadNW" ||
+				road.GetTile(nextGridPosition).name == "roadSE" ||
+				road.GetTile(nextGridPosition).name == "roadSW") {
+					float randomX = Random.Range(-1f, 1f);
+					if (randomX < 0f)
+						direction = direction2;
+					else if (randomX >= 0f)
+						direction = direction1;
+
+					return true;
+				}
+				else {
+					direction = direction1;
+					return true;
+				}
+			}
+			else {
+				nextGridPosition = road.WorldToCell(transform.position + direction2);
+				if (road.GetTile(nextGridPosition).name == "roadNE" ||
+				road.GetTile(nextGridPosition).name == "roadNW" ||
+				road.GetTile(nextGridPosition).name == "roadSE" ||
+				road.GetTile(nextGridPosition).name == "roadSW") {
+					direction = direction2;
+					return true;
+				}
+				else {
+					if (CanMove())
+						return true;
+					else {
+						Destroy(gameObject);
+						return true;
+					}
+				}
+			}
+		}
 	}
 
 	private void OnCollisionEnter2D(Collision2D collision) {
