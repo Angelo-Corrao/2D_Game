@@ -18,6 +18,7 @@ public class CarMovement : MonoBehaviour {
 	private float totSteps = 10;
 	private float oneStepDistance;
 	private float timeBetweenSteps;
+	private bool hasToTeleport = false;
 
 	private void Awake() {
 		timeBetweenSteps = animationTime / totSteps;
@@ -43,6 +44,13 @@ public class CarMovement : MonoBehaviour {
 
 	private void Update() {
 		InCurveBehaviour();
+		if (hasToTeleport) {
+			// Wait for the car to stop moving before teleporting it so it will be at center of the tile without misalignments
+			if (!isMoving) {
+				GameManager.Instance.TeleportPlayer();
+				hasToTeleport = false;
+			}
+		}
 	}
 
 	private void Move(Vector3Int nextGridPosition) {
@@ -244,6 +252,17 @@ public class CarMovement : MonoBehaviour {
 				road.GetTile(actualGridPosition).name != "roadSE" &&
 				road.GetTile(actualGridPosition).name != "roadSW")
 				checkCurve = false;
+		}
+	}
+
+	private void OnCollisionEnter2D(Collision2D collision) {
+		if (collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Well")) {
+			Debug.Log("Dead");
+			Destroy(gameObject);
+		}
+
+		if (collision.gameObject.CompareTag("Teleport")) {
+			hasToTeleport = true;
 		}
 	}
 }

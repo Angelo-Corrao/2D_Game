@@ -4,31 +4,28 @@ using UnityEngine.Events;
 
 public class CarAnimation : MonoBehaviour
 {
-	private Animator animator;
-
-	private void Awake() {
-		animator = GetComponent<Animator>();
-	}
+	public Animator animator;
+	[HideInInspector]
+	public string currentAnimation = "";
 
 	// Starts the right animation based on the starting orientation of the car when the player move and the direction he wants to move
 	public void Animate(string startingOrientation, string targetDirection, Vector2 direction) {
-		string animationToStop = "";
 		switch (targetDirection) {
 			case "up":
 				switch (startingOrientation) {
 					case "left":
 						animator.SetBool("LeftToUp", true);
-						animationToStop = "LeftToUp";
+						currentAnimation = "LeftToUp";
 						break;
 
 					case "right":
 						animator.SetBool("RightToUp", true);
-						animationToStop = "RightToUp";
+						currentAnimation = "RightToUp";
 						break;
 
 					case "down":
 						animator.SetBool("DownToUp", true);
-						animationToStop = "DownToUp";
+						currentAnimation = "DownToUp";
 						break;
 				}
 				break;
@@ -37,17 +34,17 @@ public class CarAnimation : MonoBehaviour
 				switch (startingOrientation) {
 					case "up":
 						animator.SetBool("UpToDown", true);
-						animationToStop = "UpToDown";
+						currentAnimation = "UpToDown";
 						break;
 
 					case "left":
 						animator.SetBool("LeftToDown", true);
-						animationToStop = "LeftToDown";
+						currentAnimation = "LeftToDown";
 						break;
 
 					case "right":
 						animator.SetBool("RightToDown", true);
-						animationToStop = "RightToDown";
+						currentAnimation = "RightToDown";
 						break;
 				}
 				break;
@@ -56,17 +53,17 @@ public class CarAnimation : MonoBehaviour
 				switch (startingOrientation) {
 					case "up":
 						animator.SetBool("UpToRight", true);
-						animationToStop = "UpToRight";
+						currentAnimation = "UpToRight";
 						break;
 
 					case "left":
 						animator.SetBool("LeftToRight", true);
-						animationToStop = "LeftToRight";
+						currentAnimation = "LeftToRight";
 						break;
 
 					case "down":
 						animator.SetBool("DownToRight", true);
-						animationToStop = "DownToRight";
+						currentAnimation = "DownToRight";
 						break;
 				}
 				break;
@@ -75,28 +72,28 @@ public class CarAnimation : MonoBehaviour
 				switch (startingOrientation) {
 					case "up":
 						animator.SetBool("UpToLeft", true);
-						animationToStop = "UpToLeft";
+						currentAnimation = "UpToLeft";
 						break;
 
 					case "right":
 						animator.SetBool("RightToLeft", true);
-						animationToStop = "RightToLeft";
+						currentAnimation = "RightToLeft";
 						break;
 
 					case "down":
 						animator.SetBool("DownToLeft", true);
-						animationToStop = "DownToLeft";
+						currentAnimation = "DownToLeft";
 						break;
 				}
 				break;
 		}
 
-		StartCoroutine(StopAnimation(animationToStop));
+		StartCoroutine(StopAnimation());
 	}
 
-	private IEnumerator StopAnimation(string animationToStop) {
+	public IEnumerator StopAnimation() {
 		yield return new WaitForSeconds(0.2f);
-		if (animationToStop != "")
-			animator.SetBool(animationToStop, false);
+		if (currentAnimation != "")
+			animator.SetBool(currentAnimation, false);
 	}
 }
