@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 {
 	public static GameManager Instance;
 	public Tilemap road;
+	public Tilemap fogOfWar;
 	public GameObject player;
     public GameObject enemyPrefab;
 	public GameObject wellPrefab;
@@ -27,7 +28,9 @@ public class GameManager : MonoBehaviour
 
 	void Start()
     {
-        SpawnEnemy();
+		Vector3Int startGridPosition = road.WorldToCell(player.transform.position);
+		fogOfWar.SetTile(startGridPosition, null);
+		SpawnEnemy();
 		SpawnWells();
 		SpawnTeleports();
 	}
@@ -133,12 +136,13 @@ public class GameManager : MonoBehaviour
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
+		Vector3Int newPlayerGridPosition;
 
 		do {
 			randomSpawnX = Random.Range(-9, 11) - 0.5f;
 			randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-			Vector3Int newPlayerGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+			newPlayerGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
 			Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
 
 			// Check tile validity
@@ -161,6 +165,7 @@ public class GameManager : MonoBehaviour
 		} while (invalidSpawn);
 
 		player.transform.position = new Vector3(randomSpawnX, randomSpawnY, 0);
+		fogOfWar.SetTile(newPlayerGridPosition, null);
 	}
 
 	private bool IsInCurveOrWall(Vector3Int spawnGridPosition) {

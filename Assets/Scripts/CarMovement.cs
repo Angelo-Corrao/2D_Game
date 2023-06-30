@@ -56,6 +56,19 @@ public class CarMovement : MonoBehaviour {
 	private void Move(Vector3Int nextGridPosition) {
 		isMoving = true;
 		fogOfWar.SetTile(nextGridPosition, null);
+		// If there is a wall near the cell the player moved into it will also be revealed from the fog of war
+		Vector3Int upGridPosition = road.WorldToCell(nextGridPosition + Vector3.up);
+		Vector3Int estGridPosition = road.WorldToCell(nextGridPosition + Vector3.right);
+		Vector3Int westGridPosition = road.WorldToCell(nextGridPosition + Vector3.left);
+		Vector3Int downGridPosition = road.WorldToCell(nextGridPosition + Vector3.down);
+		if (road.GetTile(upGridPosition)?.name == "roadPLAZA")
+			fogOfWar.SetTile(upGridPosition, null);
+		if (road.GetTile(estGridPosition)?.name == "roadPLAZA")
+			fogOfWar.SetTile(estGridPosition, null);
+		if (road.GetTile(westGridPosition)?.name == "roadPLAZA")
+			fogOfWar.SetTile(westGridPosition, null);
+		if (road.GetTile(downGridPosition)?.name == "roadPLAZA")
+			fogOfWar.SetTile(downGridPosition, null);
 
 		if (direction.x == 0) {
 			if (direction.y == 1) {
@@ -160,6 +173,11 @@ public class CarMovement : MonoBehaviour {
 				}
 				break;
 		}
+
+		// If the player tries to move into a wall he will not able to do it but the wall will be revealed frome the fog of war
+		/*f (road.GetTile(nextGridPosition).name == "roadPLAZA") {
+			fogOfWar.SetTile(nextGridPosition, null);
+		}*/
 
 		// This is nedeed so we can check if the player has landed in a curve
 		checkCurve = true;
