@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Net;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -14,6 +16,10 @@ public class GameManager : MonoBehaviour
 	public GameObject teleportPrefab;
 	public int wellsToSpawn = 3;
 	public int teleportsToSpawn = 2;
+	public Sprite enemySprite;
+	public Sprite wellSprite;
+	public Sprite teleportSprite;
+	public Image[] uiSlots;
 
 	private GameObject enemy;
 	private List<GameObject> wells = new List<GameObject>();
@@ -33,6 +39,7 @@ public class GameManager : MonoBehaviour
 		SpawnEnemy();
 		SpawnWells();
 		SpawnTeleports();
+		CheckNearbyObjects(startGridPosition);
 	}
 
     private void SpawnEnemy() {
@@ -166,6 +173,7 @@ public class GameManager : MonoBehaviour
 
 		player.transform.position = new Vector3(randomSpawnX, randomSpawnY, 0);
 		fogOfWar.SetTile(newPlayerGridPosition, null);
+		CheckNearbyObjects(newPlayerGridPosition);
 	}
 
 	private bool IsInCurveOrWall(Vector3Int spawnGridPosition) {
@@ -180,6 +188,7 @@ public class GameManager : MonoBehaviour
 			return false;
 	}
 
+	// Perchè Vector3 e non Vector3Int
 	private bool IsOnWell(Vector3 spawnGridPosition) {
 		foreach (GameObject well in wells) {
 			Vector3Int wellGridPosition = road.WorldToCell(well.transform.position);
@@ -200,5 +209,95 @@ public class GameManager : MonoBehaviour
 		}
 
 		return false;
+	}
+
+	public void CheckNearbyObjects(Vector3Int playerGridPosition) {
+		bool isEnemyNearby = false;
+		bool isWellNearby = false;
+		bool isTeleportNearby = false;
+
+		Vector3 tileCenter = (Vector3)playerGridPosition + new Vector3(0.5f, 0.5f, 0);
+		// Up
+		RaycastHit2D hit;
+		hit = Physics2D.Raycast(tileCenter, Vector2.up, 1);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// Est
+		hit = Physics2D.Raycast(tileCenter, Vector2.right, 1);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// West
+		hit = Physics2D.Raycast(tileCenter, Vector2.left, 1);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// South
+		hit = Physics2D.Raycast(tileCenter, Vector2.down, 1);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		UpdateUI(isEnemyNearby, isWellNearby, isTeleportNearby);
+	}
+
+	private void SaveNearbyObject(RaycastHit2D hit, ref bool isEnemyNearby, ref bool isWellNearby, ref bool isTeleportNearby) {
+		if (hit.collider != null) {
+			if (hit.collider.gameObject.CompareTag("Enemy"))
+				isEnemyNearby = true;
+
+			if (hit.collider.gameObject.CompareTag("Well"))
+				isWellNearby = true;
+
+			if (hit.collider.gameObject.CompareTag("Teleport"))
+				isTeleportNearby = true;
+		}
+	}
+
+	// Update the UI with nearby objects in this order: enemy, well, teleport
+	private void UpdateUI(bool isEnemyNearby, bool isWellNearby, bool isTeleportNearby) {
+		if (isEnemyNearby) {
+			uiSlots[0].gameObject.SetActive(true);
+			uiSlots[0].sprite = enemySprite;
+
+			if (isWellNearby) {
+				uiSlots[1].gameObject.SetActive(true);
+				uiSlots[1].sprite = wellSprite;
+
+				if (isTeleportNearby) {
+					uiSlots[2].gameObject.SetActive(true);
+					uiSlots[2].sprite = teleportSprite;
+				}
+				else
+					uiSlots[2].gameObject.SetActive(false);
+			}
+			else if (isTeleportNearby) {
+				uiSlots[1].gameObject.SetActive(true);
+				uiSlots[1].sprite = teleportSprite;
+			}
+			else
+				uiSlots[1].gameObject.SetActive(false);
+		}
+		else {
+			uiSlots[2].gameObject.SetActive(false);
+
+			if (isWellNearby) {
+				uiSlots[0].gameObject.SetActive(true);
+				uiSlots[0].sprite = wellSprite;
+
+				if (isTeleportNearby) {
+					uiSlots[1].gameObject.SetActive(true);
+					uiSlots[1].sprite = teleportSprite;
+				}
+				else
+					uiSlots[1].gameObject.SetActive(false);
+			}
+			else {
+				uiSlots[1].gameObject.SetActive(false);
+
+				if (isTeleportNearby) {
+					uiSlots[0].gameObject.SetActive(true);
+					uiSlots[0].sprite = teleportSprite;
+				}
+				else
+					uiSlots[0].gameObject.SetActive(false);
+			}
+		}
 	}
 }

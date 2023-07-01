@@ -4,7 +4,7 @@ using UnityEngine.Tilemaps;
 
 public class Shoot : MonoBehaviour {
 	public float fireRate = 1f;
-	public CarMovement carMovement;
+	public CarController carController;
 	public GameObject projectilePrefab;
 	public Tilemap road;
 
@@ -20,7 +20,7 @@ public class Shoot : MonoBehaviour {
 
 		playerInput.Car.Shoot.performed += ctx => {
 			// To avoid undesidered behaviours it's not possible to shoot while the car is moving
-			if (canShoot && !carMovement.isMoving)
+			if (canShoot && !carController.isMoving)
 				StartCoroutine(Fire(ctx.ReadValue<Vector2>()));
 		};
 	}
@@ -37,7 +37,7 @@ public class Shoot : MonoBehaviour {
 		RotateCar(direction);
 
 		// Spawn the projectile with an offset from the car so it doesn't collide with it
-		Vector3 spawnPoint = carMovement.transform.position + ((Vector3)direction * spawnOffset);
+		Vector3 spawnPoint = carController.transform.position + ((Vector3)direction * spawnOffset);
 		Projectile proj = Instantiate(projectilePrefab, spawnPoint, Quaternion.identity).GetComponent<Projectile>();
 		proj.direction = direction;
 		proj.road = road;
@@ -66,7 +66,7 @@ public class Shoot : MonoBehaviour {
 			targetDirection = "left";
 		}
 
-		carAnimation.Animate(carMovement.startingOrientation, targetDirection, direction);
-		carMovement.startingOrientation = targetDirection;
+		carAnimation.Animate(carController.startingOrientation, targetDirection, direction);
+		carController.startingOrientation = targetDirection;
 	}
 }

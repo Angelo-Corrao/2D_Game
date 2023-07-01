@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class CarMovement : MonoBehaviour {
+public class CarController : MonoBehaviour {
 	public Tilemap road;
 	public Tilemap fogOfWar;
 	[Tooltip ("Is applied only when the game starts")]
@@ -111,6 +111,8 @@ public class CarMovement : MonoBehaviour {
 
 		startingOrientation = previousDirection;
 		isMoving = false;
+		Vector3Int actualGridPosition = road.WorldToCell(transform.position);
+		GameManager.Instance.CheckNearbyObjects(actualGridPosition);
 	}
 
 	private void CanMove() {
