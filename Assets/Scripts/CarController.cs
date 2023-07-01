@@ -1,14 +1,18 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class CarController : MonoBehaviour {
+public class CarController : MonoBehaviour, ITeleportable {
 	public Tilemap road;
 	public Tilemap fogOfWar;
 	[Tooltip ("Is applied only when the game starts")]
 	public float animationTime = 0.5f;
+	public int totProjectiles = 5;
 	public string startingOrientation = "up";
 	public bool isMoving = false;
+	[HideInInspector]
+	public int projectilesCounter;
 
 	private PlayerInput playerInput;
 	private Vector2 direction;
@@ -23,6 +27,7 @@ public class CarController : MonoBehaviour {
 	private void Awake() {
 		timeBetweenSteps = animationTime / totSteps;
 		oneStepDistance = 1 / totSteps;
+		projectilesCounter = totProjectiles;
 		carAnimation = GetComponent<CarAnimation>();
 
 		playerInput = new PlayerInput();
@@ -47,7 +52,7 @@ public class CarController : MonoBehaviour {
 		if (hasToTeleport) {
 			// Wait for the car to stop moving before teleporting it so it will be at center of the tile without misalignments
 			if (!isMoving) {
-				GameManager.Instance.TeleportPlayer();
+				GameManager.Instance.Teleport(this);
 				hasToTeleport = false;
 			}
 		}
@@ -284,5 +289,21 @@ public class CarController : MonoBehaviour {
 		if (collision.gameObject.CompareTag("Teleport")) {
 			hasToTeleport = true;
 		}
+	}
+	
+	// Check if the teleport position is on another object that implements ITeleportable
+	public bool isOnOtherTeleportableObjects(Vector3 newPos) {
+		List<ITeleportable> teleportables = GameManager.Instance.teleportables;
+		for (int i = 0; i < teleportables.Count; i++) {
+			// This check if i'm not comparing the same object
+			if (this != teleportables[i]) {
+				MonoBehaviour teleportableObject = (MonoBehaviour)teleportables[i];
+				if (newPos.x == teleportableObject.transform.position.x && newPos.y == teleportableObject.transform.position.y) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }

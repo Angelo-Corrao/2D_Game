@@ -19,8 +19,8 @@ public class Shoot : MonoBehaviour {
 		playerInput = new PlayerInput();
 
 		playerInput.Car.Shoot.performed += ctx => {
-			// To avoid undesidered behaviours it's not possible to shoot while the car is moving
-			if (canShoot && !carController.isMoving)
+			// To avoid undesidered behaviors it's not possible to shoot while the car is moving
+			if (canShoot && !carController.isMoving && carController.projectilesCounter > 0)
 				StartCoroutine(Fire(ctx.ReadValue<Vector2>()));
 		};
 	}
@@ -34,11 +34,18 @@ public class Shoot : MonoBehaviour {
 	}
 
 	private IEnumerator Fire(Vector2 direction) {
+		// Every time the player shoot the number of available projectile is decreased and the UI is updated
+		carController.projectilesCounter--;
+		GameManager.Instance.UpdateAmmoUI(carController.projectilesCounter);
+		// When the the last projectile is shot check until there is no projectile on the map, than is Game Over
+		if (carController.projectilesCounter == 0)
+			GameManager.Instance.checkActiveProjectiles = true;
 		RotateCar(direction);
 
 		// Spawn the projectile with an offset from the car so it doesn't collide with it
 		Vector3 spawnPoint = carController.transform.position + ((Vector3)direction * spawnOffset);
 		Projectile proj = Instantiate(projectilePrefab, spawnPoint, Quaternion.identity).GetComponent<Projectile>();
+		GameManager.Instance.activeProjectiles.Add(proj);
 		proj.direction = direction;
 		proj.road = road;
 		proj.spawnOffset = spawnOffset;

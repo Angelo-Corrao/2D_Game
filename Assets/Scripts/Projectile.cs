@@ -24,16 +24,15 @@ public class Projectile : MonoBehaviour {
 		Move();
 	}
 
-	private void Update() {
-		//if the match end => Destroy(gameObject);
-	}
-
 	public void Move() {
 		// Controll the validity of the projectile's path
 		if (CanMove())
 			StartCoroutine(MoveBySteps());
-		else
+		else {
+			GameManager.Instance.activeProjectiles.Remove(this);
+			GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
 			Destroy(gameObject);
+		}
 	}
 
 	private IEnumerator MoveBySteps() {
@@ -64,8 +63,11 @@ public class Projectile : MonoBehaviour {
 			 */
 			if (road.GetTile(actualGridPosition) != null)
 				Move();
-			else
+			else {
+				GameManager.Instance.activeProjectiles.Remove(this);
+				GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
 				Destroy(gameObject);
+			}
 		}
 	}
 
@@ -201,8 +203,11 @@ public class Projectile : MonoBehaviour {
 
 		if (collision.gameObject.CompareTag("Enemy")) {
 			Debug.Log("Win");
+			Destroy(GameManager.Instance.enemy);
 		}
 
+		GameManager.Instance.activeProjectiles.Remove(this);
+		GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
 		Destroy(gameObject);
 	}
 }

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Net;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
@@ -20,8 +19,13 @@ public class GameManager : MonoBehaviour
 	public Sprite wellSprite;
 	public Sprite teleportSprite;
 	public Image[] uiSlots;
+	public Text projectilesCounterText;
+	public Text totProjectilesText;
+	public List<Projectile> activeProjectiles;
+	public bool checkActiveProjectiles;
+	public List<ITeleportable> teleportables = new List<ITeleportable>();
+	public GameObject enemy;
 
-	private GameObject enemy;
 	private List<GameObject> wells = new List<GameObject>();
 	private List<GameObject> teleports = new List<GameObject>();
 
@@ -39,10 +43,27 @@ public class GameManager : MonoBehaviour
 		SpawnEnemy();
 		SpawnWells();
 		SpawnTeleports();
+		teleportables.Add(player.GetComponent<CarController>());
+		teleportables.Add(enemy.GetComponent<Enemy>());
 		CheckNearbyObjects(startGridPosition);
+		CarController carController = player.GetComponent<CarController>();
+		totProjectilesText.text = carController.totProjectiles.ToString();
+		UpdateAmmoUI(carController.projectilesCounter);
+		checkActiveProjectiles = false;
 	}
 
-    private void SpawnEnemy() {
+	private void Update() {
+		// When the the last projectile is shot check until there is no projectile on the map, than is Game Over
+		if (checkActiveProjectiles) {
+			if (activeProjectiles.Count == 0) {
+				checkActiveProjectiles = false;
+				Debug.Log("End Match");
+				// End match
+			}
+		}
+	}
+
+	private void SpawnEnemy() {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
@@ -139,41 +160,55 @@ public class GameManager : MonoBehaviour
 		} while (teleportsCounter < teleportsToSpawn);
 	}
 
-	public void TeleportPlayer() {
+	/*
+	 * In this method i pass an abstraction, the interface "ITeleportable". This allows me to use only this method for
+	 * every object that can be teleported, implementing the defferents behaviors in each one of them separately.
+	 * In this way if i want to add a new teleportable objcet all i would have to do would be implementing the ITeleportable interface
+	 * in this objcet. In this specific game if i want the projectile to be able to teleport when it hits a teleport on the map
+	 * all that i need to do is implementing ITeleportable in the Projectile.cs and call this method,
+	 * respecting so the Open/Close principle.
+	 */
+	public void Teleport(ITeleportable teleportable) {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
-		Vector3Int newPlayerGridPosition;
+		Vector3Int newGridPosition;
 
 		do {
 			randomSpawnX = Random.Range(-9, 11) - 0.5f;
 			randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-			newPlayerGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-			Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
+			newGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0f));
 
 			// Check tile validity
-			invalidSpawn = IsInCurveOrWall(newPlayerGridPosition);
+			invalidSpawn = IsInCurveOrWall(newGridPosition);
 
-			// Check if it was teleported in the same position of the enemy
+			// Check if it was teleported in the same position of another teleportable object
 			if (!invalidSpawn) {
-				if (newPlayerGridPosition == enemyGridPosition)
-					invalidSpawn = true;
+				invalidSpawn = teleportable.isOnOtherTeleportableObjects(new Vector3(randomSpawnX, randomSpawnY, 0f));
 
 				// Check if it was teleported in the same position of a well
-				else {
-					invalidSpawn = IsOnWell(newPlayerGridPosition);
-				}
-			}
+				if (!invalidSpawn)
+					invalidSpawn = IsOnWell(newGridPosition);
 
-			// Check if it was teleported in the same position of a teleport
-			if (!invalidSpawn)
-				invalidSpawn = IsOnTeleport(newPlayerGridPosition);
+				// Check if it was teleported in the same position of a teleport
+				if (!invalidSpawn)
+					invalidSpawn = IsOnTeleport(newGridPosition);
+			}
 		} while (invalidSpawn);
 
-		player.transform.position = new Vector3(randomSpawnX, randomSpawnY, 0);
-		fogOfWar.SetTile(newPlayerGridPosition, null);
-		CheckNearbyObjects(newPlayerGridPosition);
+		MonoBehaviour teleportableObject = (MonoBehaviour)teleportable;
+		teleportableObject.transform.position = new Vector3(randomSpawnX, randomSpawnY, 0f);
+		if (teleportable.GetType() == typeof(CarController))
+			fogOfWar.SetTile(newGridPosition, null);
+		Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+		StartCoroutine(Wait(playerGridPosition));
+	}
+
+	// Wait before checking nearby objects after teleport
+	private IEnumerator Wait(Vector3Int playerGridPosition) {
+		yield return new WaitForSeconds(0.2f);
+		CheckNearbyObjects(playerGridPosition);
 	}
 
 	private bool IsInCurveOrWall(Vector3Int spawnGridPosition) {
@@ -188,8 +223,7 @@ public class GameManager : MonoBehaviour
 			return false;
 	}
 
-	// Perchè Vector3 e non Vector3Int
-	private bool IsOnWell(Vector3 spawnGridPosition) {
+	public bool IsOnWell(Vector3 spawnGridPosition) {
 		foreach (GameObject well in wells) {
 			Vector3Int wellGridPosition = road.WorldToCell(well.transform.position);
 			if (spawnGridPosition == wellGridPosition) {
@@ -200,7 +234,7 @@ public class GameManager : MonoBehaviour
 		return false;
 	}
 
-	private bool IsOnTeleport(Vector3 spawnGridPosition) {
+	public bool IsOnTeleport(Vector3 spawnGridPosition) {
 		foreach (GameObject teleport in teleports) {
 			Vector3Int teleportGridPosition = road.WorldToCell(teleport.transform.position);
 			if (spawnGridPosition == teleportGridPosition) {
@@ -299,5 +333,9 @@ public class GameManager : MonoBehaviour
 					uiSlots[0].gameObject.SetActive(false);
 			}
 		}
+	}
+
+	public void UpdateAmmoUI(int projectilesCounter) {
+		projectilesCounterText.text = projectilesCounter.ToString();
 	}
 }
