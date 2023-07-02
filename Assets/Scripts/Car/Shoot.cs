@@ -20,7 +20,7 @@ public class Shoot : MonoBehaviour {
 
 		playerInput.Car.Shoot.performed += ctx => {
 			// To avoid undesidered behaviors it's not possible to shoot while the car is moving
-			if (canShoot && !carController.isMoving && carController.projectilesCounter > 0)
+			if (canShoot && !carController.isMoving && carController.projectilesCounter > 0 && !GameManager.Instance.isGamePaused)
 				StartCoroutine(Fire(ctx.ReadValue<Vector2>()));
 		};
 	}
@@ -34,6 +34,7 @@ public class Shoot : MonoBehaviour {
 	}
 
 	private IEnumerator Fire(Vector2 direction) {
+		AudioManager.Instance.PlaySFX("Shoot");
 		// Every time the player shoot the number of available projectile is decreased and the UI is updated
 		carController.projectilesCounter--;
 		GameManager.Instance.UpdateAmmoUI(carController.projectilesCounter);

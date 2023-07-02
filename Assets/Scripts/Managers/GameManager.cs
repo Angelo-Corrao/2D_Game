@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
@@ -21,11 +23,30 @@ public class GameManager : MonoBehaviour
 	public Image[] uiSlots;
 	public Text projectilesCounterText;
 	public Text totProjectilesText;
-	public List<Projectile> activeProjectiles;
-	public bool checkActiveProjectiles;
-	public List<ITeleportable> teleportables = new List<ITeleportable>();
-	public GameObject enemy;
+	public Canvas pauseMenu;
+	public Canvas victoryUI;
+	public Canvas gameOverUI;
+	public AudioMixerSnapshot pausedSnapshot;
+	public AudioMixerSnapshot unpausedSnapshot;
 
+	[HideInInspector]
+	public List<Projectile> activeProjectiles;
+	[HideInInspector]
+	public bool checkActiveProjectiles;
+	[HideInInspector]
+	public List<ITeleportable> teleportables = new List<ITeleportable>();
+	[HideInInspector]
+	public GameObject enemy;
+	[HideInInspector]
+	public bool canPause = true;
+	[HideInInspector]
+	public bool isGamePaused = false; // Used to block player's input when the game is in paused
+	[HideInInspector]
+	public bool isEnemyAlive = true;
+	[HideInInspector]
+	public bool isPlayerAlive = true;
+
+	private PlayerInput playerInput;
 	private List<GameObject> wells = new List<GameObject>();
 	private List<GameObject> teleports = new List<GameObject>();
 
@@ -34,10 +55,29 @@ public class GameManager : MonoBehaviour
 			Instance = this;
 		else
 			Destroy(gameObject);
+
+		playerInput = new PlayerInput();
+		playerInput.Car.Pause.performed += _ => {
+			if (canPause) {
+				if (!isGamePaused)
+					Pause();
+				else
+					Unpause();
+			}
+		};
+	}
+
+	private void OnEnable() {
+		playerInput.Enable();
+	}
+
+	private void OnDisable() {
+		playerInput.Disable();
 	}
 
 	void Start()
     {
+		AudioManager.Instance.PlayMusic("In Game");
 		Vector3Int startGridPosition = road.WorldToCell(player.transform.position);
 		fogOfWar.SetTile(startGridPosition, null);
 		SpawnEnemy();
@@ -57,10 +97,49 @@ public class GameManager : MonoBehaviour
 		if (checkActiveProjectiles) {
 			if (activeProjectiles.Count == 0) {
 				checkActiveProjectiles = false;
-				Debug.Log("End Match");
-				// End match
+				// With this is possible to win killing the enemy with the last projectile
+				if (isEnemyAlive)
+					GameOver();
 			}
 		}
+	}
+
+	public void Continue() {
+		AudioManager.Instance.PlaySFX("Button");
+		Unpause();
+	}
+
+	public void MainMenu() {
+		AudioManager.Instance.PlaySFX("Button");
+		Unpause();
+		Cursor.lockState = CursorLockMode.None;
+		SceneManager.LoadScene(0);
+	}
+
+	public void Pause() {
+		isGamePaused = true;
+		pauseMenu.gameObject.SetActive(true);
+		Cursor.lockState = CursorLockMode.None;
+		pausedSnapshot.TransitionTo(0);
+		Time.timeScale = 0;
+	}
+
+	public void Unpause() {
+		isGamePaused = false;
+		pauseMenu.gameObject.SetActive(false);
+		Cursor.lockState = CursorLockMode.Locked;
+		unpausedSnapshot.TransitionTo(0f);
+		Time.timeScale = 1;
+	}
+
+	public void PlayAgain() {
+		isGamePaused = false;
+		Time.timeScale = 1;
+		SceneManager.LoadScene(1);
+	}
+
+	public void SetCanPause(bool value) {
+		canPause = value;
 	}
 
 	private void SpawnEnemy() {
@@ -245,13 +324,17 @@ public class GameManager : MonoBehaviour
 		return false;
 	}
 
+	/*
+	 * Check nearby objects in all 8 directions, if the check is done only in the 4 cardinal direction the player would die if
+	 * there was an enemy or well after a curve without being notified by UI before entering the curve.
+	 */
 	public void CheckNearbyObjects(Vector3Int playerGridPosition) {
 		bool isEnemyNearby = false;
 		bool isWellNearby = false;
 		bool isTeleportNearby = false;
 
 		Vector3 tileCenter = (Vector3)playerGridPosition + new Vector3(0.5f, 0.5f, 0);
-		// Up
+		// North
 		RaycastHit2D hit;
 		hit = Physics2D.Raycast(tileCenter, Vector2.up, 1);
 		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
@@ -266,6 +349,22 @@ public class GameManager : MonoBehaviour
 
 		// South
 		hit = Physics2D.Raycast(tileCenter, Vector2.down, 1);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// North / Est
+		hit = Physics2D.Raycast(tileCenter, new Vector2(1, 1), 1.4f);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// North / West
+		hit = Physics2D.Raycast(tileCenter, new Vector2(-1, 1), 1.4f);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// South / Est
+		hit = Physics2D.Raycast(tileCenter, new Vector2(1, -1), 1.4f);
+		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
+
+		// South / West
+		hit = Physics2D.Raycast(tileCenter, new Vector2(-1, -1), 1.4f);
 		SaveNearbyObject(hit, ref isEnemyNearby, ref isWellNearby, ref isTeleportNearby);
 
 		UpdateUI(isEnemyNearby, isWellNearby, isTeleportNearby);
@@ -337,5 +436,25 @@ public class GameManager : MonoBehaviour
 
 	public void UpdateAmmoUI(int projectilesCounter) {
 		projectilesCounterText.text = projectilesCounter.ToString();
+	}
+
+	public void ShowEnemy() {
+		Vector3Int enemyGridPosition = fogOfWar.WorldToCell(enemy.transform.position);
+		if (fogOfWar.GetTile(enemyGridPosition) != null)
+			fogOfWar.SetTile(enemyGridPosition, null);
+	}
+
+	public void Victory() {
+		victoryUI.gameObject.SetActive(true);
+		Cursor.lockState = CursorLockMode.None;
+		isGamePaused = true;
+		Time.timeScale = 0;
+	}
+
+	public void GameOver() {
+		gameOverUI.gameObject.SetActive(true);
+		Cursor.lockState = CursorLockMode.None;
+		isGamePaused = true;
+		Time.timeScale = 0;
 	}
 }

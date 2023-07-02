@@ -6,7 +6,10 @@ public class Projectile : MonoBehaviour {
 	public Tilemap road;
 	public float totSteps = 10;
 	public float animationTime = 0.5f;
+
+	[HideInInspector]
 	public Vector2 direction;
+	[HideInInspector]
 	public float spawnOffset;
 
 	private float oneStepDistance;
@@ -198,11 +201,19 @@ public class Projectile : MonoBehaviour {
 
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("Player")) {
-			Debug.Log("Dead");
+			AudioManager.Instance.PlaySFX("Dead");
+			GameManager.Instance.isPlayerAlive = false;
+			GameManager.Instance.GameOver();
+			Destroy(GameManager.Instance.player);
+			Destroy(gameObject);
 		}
 
 		if (collision.gameObject.CompareTag("Enemy")) {
-			Debug.Log("Win");
+			GameManager.Instance.ShowEnemy();
+			AudioManager.Instance.PlaySFX("Win");
+			GameManager.Instance.isEnemyAlive = false;
+			if (GameManager.Instance.isPlayerAlive)
+				GameManager.Instance.Victory();
 			Destroy(GameManager.Instance.enemy);
 		}
 

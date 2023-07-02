@@ -44,6 +44,15 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""ff699353-eca7-4154-872b-77b9c6e3a31d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -266,6 +275,28 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
                     ""action"": ""Shoot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2bae77b6-feff-4b35-89a5-0ce028245612"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""K&M"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4c615d20-cfc5-43cd-8330-53810369b46f"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -304,6 +335,7 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
         m_Car = asset.FindActionMap("Car", throwIfNotFound: true);
         m_Car_Movement = m_Car.FindAction("Movement", throwIfNotFound: true);
         m_Car_Shoot = m_Car.FindAction("Shoot", throwIfNotFound: true);
+        m_Car_Pause = m_Car.FindAction("Pause", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -365,12 +397,14 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
     private ICarActions m_CarActionsCallbackInterface;
     private readonly InputAction m_Car_Movement;
     private readonly InputAction m_Car_Shoot;
+    private readonly InputAction m_Car_Pause;
     public struct CarActions
     {
         private @PlayerInput m_Wrapper;
         public CarActions(@PlayerInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Movement => m_Wrapper.m_Car_Movement;
         public InputAction @Shoot => m_Wrapper.m_Car_Shoot;
+        public InputAction @Pause => m_Wrapper.m_Car_Pause;
         public InputActionMap Get() { return m_Wrapper.m_Car; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -386,6 +420,9 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
                 @Shoot.started -= m_Wrapper.m_CarActionsCallbackInterface.OnShoot;
                 @Shoot.performed -= m_Wrapper.m_CarActionsCallbackInterface.OnShoot;
                 @Shoot.canceled -= m_Wrapper.m_CarActionsCallbackInterface.OnShoot;
+                @Pause.started -= m_Wrapper.m_CarActionsCallbackInterface.OnPause;
+                @Pause.performed -= m_Wrapper.m_CarActionsCallbackInterface.OnPause;
+                @Pause.canceled -= m_Wrapper.m_CarActionsCallbackInterface.OnPause;
             }
             m_Wrapper.m_CarActionsCallbackInterface = instance;
             if (instance != null)
@@ -396,6 +433,9 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
                 @Shoot.started += instance.OnShoot;
                 @Shoot.performed += instance.OnShoot;
                 @Shoot.canceled += instance.OnShoot;
+                @Pause.started += instance.OnPause;
+                @Pause.performed += instance.OnPause;
+                @Pause.canceled += instance.OnPause;
             }
         }
     }
@@ -422,5 +462,6 @@ public partial class @PlayerInput : IInputActionCollection2, IDisposable
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
+        void OnPause(InputAction.CallbackContext context);
     }
 }

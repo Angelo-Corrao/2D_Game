@@ -9,8 +9,11 @@ public class CarController : MonoBehaviour, ITeleportable {
 	[Tooltip ("Is applied only when the game starts")]
 	public float animationTime = 0.5f;
 	public int totProjectiles = 5;
-	public string startingOrientation = "up";
+
+	[HideInInspector]
 	public bool isMoving = false;
+	[HideInInspector]
+	public string startingOrientation = "up";
 	[HideInInspector]
 	public int projectilesCounter;
 
@@ -32,7 +35,7 @@ public class CarController : MonoBehaviour, ITeleportable {
 
 		playerInput = new PlayerInput();
 		playerInput.Car.Movement.performed += ctx => {
-			if (!isMoving) {
+			if (!isMoving && !GameManager.Instance.isGamePaused) {
 				direction = ctx.ReadValue<Vector2>();
 				CanMove();
 			}
@@ -181,11 +184,6 @@ public class CarController : MonoBehaviour, ITeleportable {
 				break;
 		}
 
-		// If the player tries to move into a wall he will not able to do it but the wall will be revealed frome the fog of war
-		/*f (road.GetTile(nextGridPosition).name == "roadPLAZA") {
-			fogOfWar.SetTile(nextGridPosition, null);
-		}*/
-
 		// This is nedeed so we can check if the player has landed in a curve
 		checkCurve = true;
 	}
@@ -282,11 +280,14 @@ public class CarController : MonoBehaviour, ITeleportable {
 
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Well")) {
-			Debug.Log("Dead");
+			AudioManager.Instance.PlaySFX("Dead");
+			GameManager.Instance.isPlayerAlive = false;
+			GameManager.Instance.GameOver();
 			Destroy(gameObject);
 		}
 
 		if (collision.gameObject.CompareTag("Teleport")) {
+			AudioManager.Instance.PlaySFX("Teleport");
 			hasToTeleport = true;
 		}
 	}
