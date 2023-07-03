@@ -5,8 +5,9 @@ using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
+using System.IO;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IDataPersistence
 {
 	public static GameManager Instance;
 	public Tilemap road;
@@ -45,6 +46,10 @@ public class GameManager : MonoBehaviour
 	public bool isEnemyAlive = true;
 	[HideInInspector]
 	public bool isPlayerAlive = true;
+	[HideInInspector]
+	public bool hasMatchEnded = false;
+	[HideInInspector]
+	public SerializableMatrix<bool> grid = new SerializableMatrix<bool>();
 
 	private PlayerInput playerInput;
 	private List<GameObject> wells = new List<GameObject>();
@@ -65,6 +70,12 @@ public class GameManager : MonoBehaviour
 					Unpause();
 			}
 		};
+
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				grid.matrix[i, j] = false;
+			}
+		}
 	}
 
 	private void OnEnable() {
@@ -77,15 +88,23 @@ public class GameManager : MonoBehaviour
 
 	void Start()
     {
+		// Load Saves. The enemy's, wells's and teleports's spawn are managed in the Load method of this class
+		DataPersistenceManager.Instance.LoadGame();
+		DataPersistenceManager.Instance.SaveGame();
+
+		// Update the fog of war for the player's start position 
 		AudioManager.Instance.PlayMusic("In Game");
 		Vector3Int startGridPosition = road.WorldToCell(player.transform.position);
 		fogOfWar.SetTile(startGridPosition, null);
-		SpawnEnemy();
-		SpawnWells();
-		SpawnTeleports();
+		Vector3 cell = (Vector3)startGridPosition;
+		grid.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
+
+		// Update the list with all teleportable objects and check nearby objects
 		teleportables.Add(player.GetComponent<CarController>());
 		teleportables.Add(enemy.GetComponent<Enemy>());
 		CheckNearbyObjects(startGridPosition);
+
+		// Update ammo UI
 		CarController carController = player.GetComponent<CarController>();
 		totProjectilesText.text = carController.totProjectiles.ToString();
 		UpdateAmmoUI(carController.projectilesCounter);
@@ -110,6 +129,15 @@ public class GameManager : MonoBehaviour
 	}
 
 	public void MainMenu() {
+		/*
+		 * If the player comes back to main menu after the game end (Victory or Game Over) delete the save file
+		 * so he can't click the continue button
+		 */
+		if (!hasMatchEnded)
+			DataPersistenceManager.Instance.SaveGame();
+		else
+			FileDataHandler.Instance.Delete(Path.Combine(Application.persistentDataPath, DataPersistenceManager.Instance.fileName));
+
 		AudioManager.Instance.PlaySFX("Button");
 		Unpause();
 		Cursor.lockState = CursorLockMode.None;
@@ -133,6 +161,7 @@ public class GameManager : MonoBehaviour
 	}
 
 	public void PlayAgain() {
+		DataPersistenceManager.Instance.isNewGame = true;
 		isGamePaused = false;
 		Time.timeScale = 1;
 		SceneManager.LoadScene(1);
@@ -142,101 +171,120 @@ public class GameManager : MonoBehaviour
 		canPause = value;
 	}
 
-	private void SpawnEnemy() {
+	private void SpawnEnemy(bool isNewGame) {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 
-		do {
-			randomSpawnX = Random.Range(-9, 11) - 0.5f;
-			randomSpawnY = Random.Range(-9, 11) - 0.5f;
+		if (isNewGame) {
+			do {
+				randomSpawnX = Random.Range(-9, 11) - 0.5f;
+				randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-			Vector3Int enemySpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-			Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
-			// Check tile validity
-			invalidSpawn = IsInCurveOrWall(enemySpawnGridPosition);
-			// Check if it was spawned in the same position of the player
-			if (!invalidSpawn) {
-				if (enemySpawnGridPosition == playerGridPosition)
-					invalidSpawn = true;
-				else
-					invalidSpawn = false;
-			}
-		} while (invalidSpawn);
+				Vector3Int enemySpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+				// Check tile validity
+				invalidSpawn = IsInCurveOrWall(enemySpawnGridPosition);
+				// Check if it was spawned in the same position of the player
+				if (!invalidSpawn) {
+					if (enemySpawnGridPosition == playerGridPosition)
+						invalidSpawn = true;
+					else
+						invalidSpawn = false;
+				}
+			} while (invalidSpawn);
 
-		enemy = Instantiate(enemyPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
+			enemy = Instantiate(enemyPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
+		}
+		else {
+			enemy = Instantiate(enemyPrefab, DataPersistenceManager.Instance.gameData.enemyPosition, Quaternion.identity);
+		}
 	}
 
-	private void SpawnWells() {
+	private void SpawnWells(bool isNewGame) {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 		int wellsCounter = 0;
 
-		do {
+		if (isNewGame) {
 			do {
-				randomSpawnX = Random.Range(-9, 11) - 0.5f;
-				randomSpawnY = Random.Range(-9, 11) - 0.5f;
+				do {
+					randomSpawnX = Random.Range(-9, 11) - 0.5f;
+					randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-				Vector3Int wellSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-				Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
-				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+					Vector3Int wellSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+					Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
+					Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
 
-				// Check tile validity
-				invalidSpawn = IsInCurveOrWall(wellSpawnGridPosition);
+					// Check tile validity
+					invalidSpawn = IsInCurveOrWall(wellSpawnGridPosition);
 
-				// Check if it was spawned in the same position of the enemy or the player
-				if (!invalidSpawn) {
-					if (wellSpawnGridPosition == enemyGridPosition || wellSpawnGridPosition == playerGridPosition)
-						invalidSpawn = true;
+					// Check if it was spawned in the same position of the enemy or the player
+					if (!invalidSpawn) {
+						if (wellSpawnGridPosition == enemyGridPosition || wellSpawnGridPosition == playerGridPosition)
+							invalidSpawn = true;
 
-					// Check if it was spawned in the same position of another well
-					else
-						invalidSpawn = IsOnWell(wellSpawnGridPosition);
-				}
-			} while (invalidSpawn);
+						// Check if it was spawned in the same position of another well
+						else
+							invalidSpawn = IsOnWell(wellSpawnGridPosition);
+					}
+				} while (invalidSpawn);
 
-			wells.Add(Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
-			wellsCounter++;
-		} while (wellsCounter < wellsToSpawn);
+				wells.Add(Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+				wellsCounter++;
+			} while (wellsCounter < wellsToSpawn);
+		}
+		else {
+			foreach (Vector3 pos in DataPersistenceManager.Instance.gameData.wellsPosition) {
+				wells.Add(Instantiate(wellPrefab, pos, Quaternion.identity));
+			}
+		}
 	}
 
-	private void SpawnTeleports() {
+	private void SpawnTeleports(bool isNewGame) {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 		int teleportsCounter = 0;
 
-		do {
+		if (isNewGame) {
 			do {
-				randomSpawnX = Random.Range(-9, 11) - 0.5f;
-				randomSpawnY = Random.Range(-9, 11) - 0.5f;
+				do {
+					randomSpawnX = Random.Range(-9, 11) - 0.5f;
+					randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-				Vector3Int teleportSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-				Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
-				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+					Vector3Int teleportSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+					Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
+					Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
 
-				// Check tile validity
-				invalidSpawn = IsInCurveOrWall(teleportSpawnGridPosition);
+					// Check tile validity
+					invalidSpawn = IsInCurveOrWall(teleportSpawnGridPosition);
 
-				// Check if it was spawned in the same position of the enemy or the player
-				if (!invalidSpawn) {
-					if (teleportSpawnGridPosition == enemyGridPosition || teleportSpawnGridPosition == playerGridPosition)
-						invalidSpawn = true;
+					// Check if it was spawned in the same position of the enemy or the player
+					if (!invalidSpawn) {
+						if (teleportSpawnGridPosition == enemyGridPosition || teleportSpawnGridPosition == playerGridPosition)
+							invalidSpawn = true;
 
-					// Check if it was spawned in the same position of a well
-					else
-						invalidSpawn = IsOnWell(teleportSpawnGridPosition);
-				}
+						// Check if it was spawned in the same position of a well
+						else
+							invalidSpawn = IsOnWell(teleportSpawnGridPosition);
+					}
 
-				// Check if it was spawned in the same position of another teleport
-				if (!invalidSpawn)
-					invalidSpawn = IsOnTeleport(teleportSpawnGridPosition);
-			} while (invalidSpawn);
+					// Check if it was spawned in the same position of another teleport
+					if (!invalidSpawn)
+						invalidSpawn = IsOnTeleport(teleportSpawnGridPosition);
+				} while (invalidSpawn);
 
-			teleports.Add(Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
-			teleportsCounter++;
-		} while (teleportsCounter < teleportsToSpawn);
+				teleports.Add(Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+				teleportsCounter++;
+			} while (teleportsCounter < teleportsToSpawn);
+		}
+		else {
+			foreach (Vector3 pos in DataPersistenceManager.Instance.gameData.teleportsPosition) {
+				teleports.Add(Instantiate(teleportPrefab, pos, Quaternion.identity));
+			}
+		}
 	}
 
 	/*
@@ -445,6 +493,8 @@ public class GameManager : MonoBehaviour
 	}
 
 	public void Victory() {
+		canPause = false;
+		hasMatchEnded = true;
 		victoryUI.gameObject.SetActive(true);
 		Cursor.lockState = CursorLockMode.None;
 		isGamePaused = true;
@@ -452,9 +502,54 @@ public class GameManager : MonoBehaviour
 	}
 
 	public void GameOver() {
+		canPause = false;
+		hasMatchEnded = true;
 		gameOverUI.gameObject.SetActive(true);
 		Cursor.lockState = CursorLockMode.None;
 		isGamePaused = true;
 		Time.timeScale = 0;
+	}
+
+	// Remove the fog of war from the cells that the player has already visited based on the save file
+	private void RecreateMap() {
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				if (grid.matrix[i, j]) {
+					// - 10 is nedeed because the grid in world space goes from -10 to +10 and the matrix starts from the position [0, 0]
+					Vector3Int gridPosition = fogOfWar.WorldToCell(new Vector3(i - 10, j - 10, 0));
+					fogOfWar.SetTile(gridPosition, null);
+				}
+			}
+		}
+	}
+
+	public void LoadData(GameData gameData, bool isNewGame) {
+		if (isNewGame) {
+			gameData.grid = grid;
+			SpawnEnemy(true);
+			SpawnWells(true);
+			SpawnTeleports(true);
+		}
+		else {
+			grid = gameData.grid;
+			SpawnEnemy(false);
+			SpawnWells(false);
+			SpawnTeleports(false);
+		}
+
+		RecreateMap();
+	}
+
+	public void SaveData(ref GameData gameData) {
+		gameData.grid = grid;
+		gameData.enemyPosition = enemy.transform.position;
+		gameData.wellsPosition.Clear();
+		foreach (GameObject well in wells) {
+			gameData.wellsPosition.Add(well.transform.position);
+		}
+		gameData.teleportsPosition.Clear();
+		foreach (GameObject teleport in teleports) {
+			gameData.teleportsPosition.Add(teleport.transform.position);
+		}
 	}
 }
