@@ -124,7 +124,7 @@ public class CarController : MonoBehaviour, ITeleportable, IDataPersistence {
 		GameManager.Instance.CheckNearbyObjects(actualGridPosition);
 
 		// Update the grid of the positions already visited from the player
-		// + 10 is nedeed because the grid in world space goes from -10 to +10 and the matrix starts from the position [0, 0]
+		// + 10 is nedeed because the grid in world space goes from -10 to +9 and the matrix starts from the position [0, 0]
 		Vector3 cell = (Vector3)actualGridPosition;
 		GameManager.Instance.grid.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
 	}

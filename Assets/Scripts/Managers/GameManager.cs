@@ -515,7 +515,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 20; j++) {
 				if (grid.matrix[i, j]) {
-					// - 10 is nedeed because the grid in world space goes from -10 to +10 and the matrix starts from the position [0, 0]
+					// - 10 is nedeed because the grid in world space goes from -10 to +9 and the matrix starts from the position [0, 0]
 					Vector3Int gridPosition = fogOfWar.WorldToCell(new Vector3(i - 10, j - 10, 0));
 					fogOfWar.SetTile(gridPosition, null);
 				}
