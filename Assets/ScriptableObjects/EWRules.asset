@@ -12,8 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e130c86f2710cd489b4b664fd97a2ab, type: 3}
   m_Name: EWRules
   m_EditorClassIdentifier: 
-  upPossibleSprites: []
-  downPossibleSprites: []
+  upPossibleSprites:
+  - {fileID: 9139558584012844278, guid: 96fae0a666b6b244b880fc768b5c4a2a, type: 3}
+  - {fileID: 5132612637520849255, guid: faa1913e40008714ab21e6146a72c85c, type: 3}
+  - {fileID: 4763163050609731049, guid: 900e713867f57f84091067477bf38340, type: 3}
+  - {fileID: 3827376673697250590, guid: 094761c376f7e1a44900d417d09a7cf1, type: 3}
+  downPossibleSprites:
+  - {fileID: 9139558584012844278, guid: 96fae0a666b6b244b880fc768b5c4a2a, type: 3}
+  - {fileID: 233211230214570848, guid: cd900ce53bec02f4a95a8c53a4d9ed00, type: 3}
+  - {fileID: 7205579168816685996, guid: 68faf1bfbfb2c5845b53043451d32a54, type: 3}
+  - {fileID: 2209511132380477495, guid: 3fcca492c47ca0a4f91b882ae4ac53d7, type: 3}
   rightPossibleSprites:
   - {fileID: 9139558584012844278, guid: 96fae0a666b6b244b880fc768b5c4a2a, type: 3}
   - {fileID: 233211230214570848, guid: cd900ce53bec02f4a95a8c53a4d9ed00, type: 3}

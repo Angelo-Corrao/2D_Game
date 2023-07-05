@@ -12,7 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e130c86f2710cd489b4b664fd97a2ab, type: 3}
   m_Name: EWSRules
   m_EditorClassIdentifier: 
-  upPossibleSprites: []
+  upPossibleSprites:
+  - {fileID: 9139558584012844278, guid: 96fae0a666b6b244b880fc768b5c4a2a, type: 3}
+  - {fileID: 5132612637520849255, guid: faa1913e40008714ab21e6146a72c85c, type: 3}
+  - {fileID: 4763163050609731049, guid: 900e713867f57f84091067477bf38340, type: 3}
+  - {fileID: 3827376673697250590, guid: 094761c376f7e1a44900d417d09a7cf1, type: 3}
   downPossibleSprites:
   - {fileID: 5132612637520849255, guid: faa1913e40008714ab21e6146a72c85c, type: 3}
   - {fileID: 6639075419602715269, guid: 3e984137ed70a8b4ab7fdccada3f5598, type: 3}

@@ -36,4 +36,8 @@ MonoBehaviour:
   - {fileID: 3827376673697250590, guid: 094761c376f7e1a44900d417d09a7cf1, type: 3}
   - {fileID: 3653368254091764242, guid: 918c14c928b1c11449b20fc5518301f6, type: 3}
   - {fileID: 2209511132380477495, guid: 3fcca492c47ca0a4f91b882ae4ac53d7, type: 3}
-  leftPossibleSprites: []
+  leftPossibleSprites:
+  - {fileID: 2783686272901005410, guid: 4d739b28d8000114eb889c61125ff97c, type: 3}
+  - {fileID: 3827376673697250590, guid: 094761c376f7e1a44900d417d09a7cf1, type: 3}
+  - {fileID: 3653368254091764242, guid: 918c14c928b1c11449b20fc5518301f6, type: 3}
+  - {fileID: 2209511132380477495, guid: 3fcca492c47ca0a4f91b882ae4ac53d7, type: 3}
