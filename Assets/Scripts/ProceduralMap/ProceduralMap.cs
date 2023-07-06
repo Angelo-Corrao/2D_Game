@@ -86,7 +86,7 @@ public class ProceduralMap : MonoBehaviour {
 				if (mp.sprite.name == cells[lowerEntropyIdx].possibleSprites[0].name) {
 					// up cell
 					int upIdx = lowerEntropyIdx + 1;
-					if (upIdx >= 0 && upIdx < cells.Count) {
+					if (upIdx >= 0 && upIdx < cells.Count && cells[lowerEntropyIdx].gridPosition.y != 9) {
 						foreach (GameObject s in cells[upIdx].possibleSprites.ToList()) {
 							bool isSpriteValid = false;
 							for (int i = 0; i < mp.mapPieceRules.upPossibleSprites.Count; i++) {
@@ -102,7 +102,7 @@ public class ProceduralMap : MonoBehaviour {
 					}
 					// down cell
 					int downIdx = lowerEntropyIdx - 1;
-					if (downIdx >= 0 && downIdx < cells.Count) {
+					if (downIdx >= 0 && downIdx < cells.Count && cells[lowerEntropyIdx].gridPosition.y != -10) {
 						foreach (GameObject s in cells[downIdx].possibleSprites.ToList()) {
 							bool isSpriteValid = false;
 							for (int i = 0; i < mp.mapPieceRules.downPossibleSprites.Count; i++) {
@@ -134,7 +134,7 @@ public class ProceduralMap : MonoBehaviour {
 						cells[rightIdx].entropyLevel = cells[rightIdx].possibleSprites.Count;
 					}
 					// left cell
-					int leftIdx = lowerEntropyIdx - 20 - (-10 + (-1 * ((int)cells[lowerEntropyIdx].gridPosition.y)));
+					int leftIdx = lowerEntropyIdx - 20;
 					if (leftIdx >= 0 && leftIdx < cells.Count) {
 						foreach (GameObject s in cells[leftIdx].possibleSprites.ToList()) {
 							bool isSpriteValid = false;
