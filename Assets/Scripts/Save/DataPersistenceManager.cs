@@ -29,6 +29,7 @@ public class DataPersistenceManager : MonoBehaviour
 
 	private void Start() {
 		SceneManager.activeSceneChanged += ChangedActiveScene;
+		ProceduralMap.mapCompleted += () => dataPersistenceObjects = FindAllDataPersistenceObjects();
 		dataPersistenceObjects = FindAllDataPersistenceObjects();
 	}
 
@@ -50,7 +51,7 @@ public class DataPersistenceManager : MonoBehaviour
 		if (gameData == null) {
 			NewGame();
 		}
-
+		
 		foreach (IDataPersistence dataPersistenceObjcet in dataPersistenceObjects) {
 			dataPersistenceObjcet.LoadData(gameData, isNewGame);
 		}

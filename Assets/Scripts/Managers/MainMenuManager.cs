@@ -1,9 +1,19 @@
+using System;
 using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MainMenuManager : MonoBehaviour {
+[Serializable]
+public enum GameMode{
+	STANDARD = 0,
+	PROCEDURAL = 1
+}
+
+public class MainMenuManager : MonoBehaviour, IDataPersistence {
 	public static MainMenuManager Instance;
+
+	[HideInInspector]
+	public GameMode gameMode;
 
 	private bool saveAlreadyExists = false;
 	private bool hasToSave = true;
@@ -26,22 +36,44 @@ public class MainMenuManager : MonoBehaviour {
 	 * When New Game is clicked, setting "isNewGame" to true make every object that implements IDataPersistence
 	 * load default value for it's properties
 	 */
-	public void NewGame() {
+	public void NewGame(int gameMode) {
+		Cursor.lockState = CursorLockMode.Locked;
+		AudioManager.Instance.PlaySFX("Button");
+
+		switch (gameMode) {
+			case 0:
+				this.gameMode = (GameMode)gameMode;
+				SceneManager.LoadScene(1);
+				break;
+
+			case 1:
+				this.gameMode = (GameMode)gameMode;
+				SceneManager.LoadScene(2);
+				break;
+		}
+
 		DataPersistenceManager.Instance.NewGame();
 		DataPersistenceManager.Instance.SaveGame();
 		DataPersistenceManager.Instance.isNewGame = true;
-		Cursor.lockState = CursorLockMode.Locked;
-		AudioManager.Instance.PlaySFX("Button");
-		SceneManager.LoadScene(1);
 	}
 
 	// If the save file doesn't exist the player can't click continue
 	public void Continue() {
 		if (saveAlreadyExists) {
+			DataPersistenceManager.Instance.LoadGame();
 			DataPersistenceManager.Instance.isNewGame = false;
 			Cursor.lockState = CursorLockMode.Locked;
 			AudioManager.Instance.PlaySFX("Button");
-			SceneManager.LoadScene(1);
+
+			switch (gameMode) {
+				case GameMode.STANDARD:
+					SceneManager.LoadScene(1);
+					break;
+
+				case GameMode.PROCEDURAL:
+					SceneManager.LoadScene(2);
+					break;
+			}
 		}
 	}
 
@@ -59,5 +91,13 @@ public class MainMenuManager : MonoBehaviour {
 	private void OnApplicationQuit() {
 		if (hasToSave)
 			DataPersistenceManager.Instance.SaveGame();
+	}
+
+	public void LoadData(GameData gameData, bool isNewGame) {
+		gameMode = (GameMode)gameData.gameMode;
+	}
+
+	public void SaveData(ref GameData gameData) {
+		gameData.gameMode = (int)gameMode;
 	}
 }

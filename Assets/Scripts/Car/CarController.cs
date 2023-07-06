@@ -326,7 +326,10 @@ public class CarController : MonoBehaviour, ITeleportable, IDataPersistence {
 	}
 
 	public void SaveData(ref GameData gameData) {
-		gameData.playerPosition = transform.position;
+		// If the player is moving while the game saves calculate the tile's central position he's on
+		Vector3Int gridPosition = road.WorldToCell(transform.position);
+		Vector3 center = (Vector3)gridPosition + new Vector3(0.5f, 0.5f, 0);
+		gameData.playerPosition = center;
 		gameData.projectilesCounter = projectilesCounter;
 	}
 }

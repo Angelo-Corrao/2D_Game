@@ -16,8 +16,8 @@ public class GameManager : MonoBehaviour, IDataPersistence
     public GameObject enemyPrefab;
 	public GameObject wellPrefab;
 	public GameObject teleportPrefab;
-	public int wellsToSpawn = 3;
-	public int teleportsToSpawn = 2;
+	public int wellsToSpawn = 6;
+	public int teleportsToSpawn = 3;
 	public Sprite enemySprite;
 	public Sprite wellSprite;
 	public Sprite teleportSprite;
@@ -86,8 +86,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 		playerInput.Disable();
 	}
 
-	void Start()
-    {
+	private void Start() {
 		// Load Saves. The enemy's, wells's and teleports's spawn are managed in the Load method of this class
 		DataPersistenceManager.Instance.LoadGame();
 		DataPersistenceManager.Instance.SaveGame();
@@ -164,7 +163,15 @@ public class GameManager : MonoBehaviour, IDataPersistence
 		DataPersistenceManager.Instance.isNewGame = true;
 		isGamePaused = false;
 		Time.timeScale = 1;
-		SceneManager.LoadScene(1);
+		switch (MainMenuManager.Instance.gameMode) {
+			case GameMode.STANDARD:
+				SceneManager.LoadScene(1);
+				break;
+
+			case GameMode.PROCEDURAL:
+				SceneManager.LoadScene(2);
+				break;
+		}
 	}
 
 	public void SetCanPause(bool value) {

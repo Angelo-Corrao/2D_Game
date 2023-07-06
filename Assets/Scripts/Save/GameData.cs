@@ -12,4 +12,5 @@ public class GameData
 	public Vector3 enemyPosition;
 	public List<Vector3> wellsPosition= new List<Vector3>();
 	public List<Vector3> teleportsPosition = new List<Vector3>();
+	public int gameMode;
 }

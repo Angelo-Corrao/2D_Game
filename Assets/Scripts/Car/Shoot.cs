@@ -37,6 +37,9 @@ public class Shoot : MonoBehaviour {
 		AudioManager.Instance.PlaySFX("Shoot");
 		// Every time the player shoot the number of available projectile is decreased and the UI is updated
 		carController.projectilesCounter--;
+		carController.isMoving = true;
+		// Wait before being able to move again after the player shot
+		StartCoroutine(Wait());
 		GameManager.Instance.UpdateAmmoUI(carController.projectilesCounter);
 		// When the the last projectile is shot check until there is no projectile on the map, than is Game Over
 		if (carController.projectilesCounter == 0)
@@ -76,5 +79,10 @@ public class Shoot : MonoBehaviour {
 
 		carAnimation.Animate(carController.startingOrientation, targetDirection, direction);
 		carController.startingOrientation = targetDirection;
+	}
+
+	private IEnumerator Wait() {
+		yield return new WaitForSeconds(0.2f);
+		carController.isMoving = false;
 	}
 }
