@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class ProceduralMap : MonoBehaviour {
+public class ProceduralMap : MonoBehaviour, IDataPersistence {
 	public List<TileBase> allSprites = new List<TileBase>();
 	public List<MapPieceRules> spritesRules = new List<MapPieceRules>();
 	public Tilemap road;
@@ -19,10 +19,14 @@ public class ProceduralMap : MonoBehaviour {
 	private List<MapCell> cells = new List<MapCell>();
 	private List<MapPiece> mapPieces = new List<MapPiece>();
 	private int lowerEntropyIdx = 0;
+	private SerializableMatrix<string> proceduralTiles = new SerializableMatrix<string>();
 
 	private void Start() {
-		GenerateMapPieces();
-		GenerateMapCells();
+		DataPersistenceManager.Instance.LoadGame();
+		if (!isMapCompleted) {
+			GenerateMapPieces();
+			GenerateMapCells();
+		}
 	}
 
 	private void Update() {
@@ -55,8 +59,12 @@ public class ProceduralMap : MonoBehaviour {
 
 	private void InstantiateSprite() {
 		Vector3Int gridPosition = road.WorldToCell((Vector3)cells[lowerEntropyIdx].gridPosition + new Vector3(-0.5f, -0.5f, 0));
-		if (cells[lowerEntropyIdx].possibleSprites.Count == 1)
+		if (cells[lowerEntropyIdx].possibleSprites.Count == 1) {
 			road.SetTile(gridPosition, cells[lowerEntropyIdx].possibleSprites[0]);
+			// Save tile
+			Vector3 cell = (Vector3)gridPosition;
+			proceduralTiles.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = cells[lowerEntropyIdx].possibleSprites[0].name;
+		}
 		else {
 			int randomSprite = PickRandomSprite();
 			road.SetTile(gridPosition, cells[lowerEntropyIdx].possibleSprites[randomSprite]);
@@ -64,6 +72,9 @@ public class ProceduralMap : MonoBehaviour {
 			cells[lowerEntropyIdx].possibleSprites.Clear();
 			cells[lowerEntropyIdx].possibleSprites.Add(instantiatedSprite);
 			cells[lowerEntropyIdx].entropyLevel = cells[lowerEntropyIdx].possibleSprites.Count;
+			// Save tile
+			Vector3 cell = (Vector3)gridPosition;
+			proceduralTiles.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = cells[lowerEntropyIdx].possibleSprites[0].name;
 		}
 
 		cells[lowerEntropyIdx].isFilled = true;
@@ -254,5 +265,33 @@ public class ProceduralMap : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	public void RecreateMap() {
+		for (int i = 0; i < 20; i++) {
+			for (int j = 0; j < 20; j++) {
+				foreach (TileBase tile in allSprites) {
+					if (tile.name == proceduralTiles.matrix[i, j]) {
+						// - 10 is nedeed because the grid in world space goes from -10 to +9 and the matrix starts from the position [0, 0]
+						Vector3Int gridPosition = road.WorldToCell(new Vector3(i - 10, j - 10, 0));
+						road.SetTile(gridPosition, tile);
+
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	public void LoadData(GameData gameData, bool isNewGame) {
+		if (!isNewGame) {
+			proceduralTiles = gameData.proceduralTiles;
+			RecreateMap();
+			isMapCompleted = true;
+		}
+	}
+
+	public void SaveData(ref GameData gameData) {
+		gameData.proceduralTiles = proceduralTiles;
 	}
 }
