@@ -32,12 +32,6 @@ public class ProceduralMap : MonoBehaviour, IDataPersistence {
 	private void Update() {
 		if (!isMapCompleted)
 			Loop();
-		else {
-			gameObject.SetActive(false);
-			carController.SetActive(true);
-			gameManager.SetActive(true);
-			mapCompleted.Invoke();
-		}
 	}
 
 	private void Loop() {
@@ -94,6 +88,9 @@ public class ProceduralMap : MonoBehaviour, IDataPersistence {
 		}
 		if (areAllCellsFilled) {
 			isMapCompleted = true;
+			gameManager.SetActive(true);
+			carController.SetActive(true);
+			mapCompleted.Invoke();
 			return;
 		}
 		else {
@@ -267,6 +264,12 @@ public class ProceduralMap : MonoBehaviour, IDataPersistence {
 		}
 	}
 
+	public void SetupStartGame() {
+		gameManager.SetActive(true);
+		carController.SetActive(true);
+		mapCompleted.Invoke();
+	}
+
 	public void RecreateMap() {
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 20; j++) {
@@ -288,6 +291,7 @@ public class ProceduralMap : MonoBehaviour, IDataPersistence {
 			proceduralTiles = gameData.proceduralTiles;
 			RecreateMap();
 			isMapCompleted = true;
+			SetupStartGame();
 		}
 	}
 
