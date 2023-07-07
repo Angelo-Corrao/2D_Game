@@ -5,11 +5,11 @@ using UnityEngine.Tilemaps;
 
 public class MapPiece
 {
-    public TileBase sprite;
+    public TileBase tile;
     public MapPieceRules mapPieceRules;
 
-    public MapPiece(TileBase sprite, MapPieceRules mapPieceRules) {
-        this.sprite = sprite;
+    public MapPiece(TileBase tile, MapPieceRules mapPieceRules) {
+        this.tile = tile;
         this.mapPieceRules = mapPieceRules;
     }
 }

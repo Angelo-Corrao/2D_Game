@@ -49,7 +49,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 	[HideInInspector]
 	public bool hasMatchEnded = false;
 	[HideInInspector]
-	public SerializableMatrix<bool> grid = new SerializableMatrix<bool>();
+	public SerializableMatrix<bool> visitedCells = new SerializableMatrix<bool>();
 
 	private PlayerInput playerInput;
 	private List<GameObject> wells = new List<GameObject>();
@@ -73,7 +73,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 20; j++) {
-				grid.matrix[i, j] = false;
+				visitedCells.matrix[i, j] = false;
 			}
 		}
 	}
@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 		Vector3Int startGridPosition = road.WorldToCell(player.transform.position);
 		fogOfWar.SetTile(startGridPosition, null);
 		Vector3 cell = (Vector3)startGridPosition;
-		grid.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
+		visitedCells.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
 
 		// Update the list with all teleportable objects and check nearby objects
 		teleportables.Add(player.GetComponent<CarController>());
@@ -521,8 +521,8 @@ public class GameManager : MonoBehaviour, IDataPersistence
 	private void RecreateMap() {
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 20; j++) {
-				if (grid.matrix[i, j]) {
-					// - 10 is nedeed because the grid in world space goes from -10 to +9 and the matrix starts from the position [0, 0]
+				if (visitedCells.matrix[i, j]) {
+					// - 10 is nedeed because the grid in world space goes from -10 to +10 and the matrix starts from the position [0, 0]
 					Vector3Int gridPosition = fogOfWar.WorldToCell(new Vector3(i - 10, j - 10, 0));
 					fogOfWar.SetTile(gridPosition, null);
 				}
@@ -532,13 +532,13 @@ public class GameManager : MonoBehaviour, IDataPersistence
 
 	public void LoadData(GameData gameData, bool isNewGame) {
 		if (isNewGame) {
-			gameData.grid = grid;
+			gameData.visitedCells = visitedCells;
 			SpawnEnemy(true);
 			SpawnWells(true);
 			SpawnTeleports(true);
 		}
 		else {
-			grid = gameData.grid;
+			visitedCells = gameData.visitedCells;
 			SpawnEnemy(false);
 			SpawnWells(false);
 			SpawnTeleports(false);
@@ -548,7 +548,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 	}
 
 	public void SaveData(ref GameData gameData) {
-		gameData.grid = grid;
+		gameData.visitedCells = visitedCells;
 		gameData.enemyPosition = enemy.transform.position;
 		gameData.wellsPosition.Clear();
 		foreach (GameObject well in wells) {

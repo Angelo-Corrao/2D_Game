@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e130c86f2710cd489b4b664fd97a2ab, type: 3}
   m_Name: NESRules
   m_EditorClassIdentifier: 
-  upPossibleSprites:
+  upPossibleTiles:
   - {fileID: 11400000, guid: 05ca5e21412b74347932638ab6f347d3, type: 2}
   - {fileID: 11400000, guid: 5b911793286aadb42b583ff7f4672874, type: 2}
   - {fileID: 11400000, guid: 90d3f5db4202b2e4c936f68c59d82a37, type: 2}
@@ -20,7 +20,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2fbd4f08010c92242895c863ff1f2b9a, type: 2}
   - {fileID: 11400000, guid: 8769c1830dd56ae4d8c650068ed16b21, type: 2}
   - {fileID: 11400000, guid: 38aa3cc16fe8b3943a2a9ec3fb83a9aa, type: 2}
-  downPossibleSprites:
+  downPossibleTiles:
   - {fileID: 11400000, guid: 63b01b47f02395446b8f35c1550ff86f, type: 2}
   - {fileID: 11400000, guid: 5b911793286aadb42b583ff7f4672874, type: 2}
   - {fileID: 11400000, guid: 53013bccc4a06b2439fd1bb96442a53b, type: 2}
@@ -28,7 +28,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9778a19bd57f6214caf1fd79e5b21023, type: 2}
   - {fileID: 11400000, guid: 45d4acdcad27c6944bc28793c124b867, type: 2}
   - {fileID: 11400000, guid: 2fbd4f08010c92242895c863ff1f2b9a, type: 2}
-  rightPossibleSprites:
+  rightPossibleTiles:
   - {fileID: 11400000, guid: ca238746a84beba4ba5b4056e22abe0e, type: 2}
   - {fileID: 11400000, guid: 05ca5e21412b74347932638ab6f347d3, type: 2}
   - {fileID: 11400000, guid: 53013bccc4a06b2439fd1bb96442a53b, type: 2}
@@ -36,7 +36,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 45d4acdcad27c6944bc28793c124b867, type: 2}
   - {fileID: 11400000, guid: 2fbd4f08010c92242895c863ff1f2b9a, type: 2}
   - {fileID: 11400000, guid: 38aa3cc16fe8b3943a2a9ec3fb83a9aa, type: 2}
-  leftPossibleSprites:
+  leftPossibleTiles:
   - {fileID: 11400000, guid: 9778a19bd57f6214caf1fd79e5b21023, type: 2}
   - {fileID: 11400000, guid: 45d4acdcad27c6944bc28793c124b867, type: 2}
   - {fileID: 11400000, guid: 2fbd4f08010c92242895c863ff1f2b9a, type: 2}

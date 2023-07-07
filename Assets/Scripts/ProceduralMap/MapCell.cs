@@ -7,12 +7,12 @@ public class MapCell
 {
     public Vector2 gridPosition;
 	public int entropyLevel;
-	public List<TileBase> possibleSprites = new List<TileBase>();
+	public List<TileBase> possibleTiles = new List<TileBase>();
 	public bool isFilled = false;
 
-    public MapCell(Vector2 gridPosition, List<TileBase> possibleSprites) {
+    public MapCell(Vector2 gridPosition, List<TileBase> possibleTiles) {
         this.gridPosition = gridPosition;
-		this.possibleSprites = possibleSprites;
-		entropyLevel = possibleSprites.Count;
+		this.possibleTiles = possibleTiles;
+		entropyLevel = possibleTiles.Count;
 	}
 }
