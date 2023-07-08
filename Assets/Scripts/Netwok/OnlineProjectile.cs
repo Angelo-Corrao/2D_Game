@@ -37,7 +37,7 @@ public class OnlineProjectile : MonoBehaviour {
 		else {
 			OnlineGameManager.Instance.activeProjectiles.Remove(this);
 			GameObject enemy = OnlineGameManager.Instance.enemy.Value;
-			OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
+			OnlineGameManager.Instance.TeleportEnemyServerRpc();
 			projDestroyed?.Invoke();
 			Destroy(gameObject);
 		}
@@ -74,7 +74,7 @@ public class OnlineProjectile : MonoBehaviour {
 			else {
 				OnlineGameManager.Instance.activeProjectiles.Remove(this);
 				GameObject enemy = OnlineGameManager.Instance.enemy.Value;
-				OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
+				OnlineGameManager.Instance.TeleportEnemyServerRpc();
 				projDestroyed?.Invoke();
 				Destroy(gameObject);
 			}
@@ -221,11 +221,11 @@ public class OnlineProjectile : MonoBehaviour {
 			OnlineGameManager.Instance.isEnemyAlive = false;
 			if (OnlineGameManager.Instance.isPlayerAlive)
 				OnlineGameManager.Instance.Victory();
-			Destroy(enemy);
+			OnlineGameManager.Instance.DestroyEnemyServerRpc();
 		}
 
 		OnlineGameManager.Instance.activeProjectiles.Remove(this);
-		OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
+		OnlineGameManager.Instance.TeleportEnemyServerRpc();
 		projDestroyed?.Invoke();
 		Destroy(gameObject);
 	}

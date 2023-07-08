@@ -8,7 +8,7 @@ using UnityEngine.UI;
 using System.IO;
 using Unity.Netcode;
 
-public class OnlineGameManager : NetworkBehaviour{
+public class OnlineGameManager : NetworkBehaviour {
 	public static OnlineGameManager Instance;
 	public Tilemap road;
 	public Tilemap fogOfWar;
@@ -59,8 +59,8 @@ public class OnlineGameManager : NetworkBehaviour{
 		NetworkVariableWritePermission.Owner);
 
 	private PlayerInput playerInput;
-	private List<GameObject> wells = new List<GameObject>();
-	private List<GameObject> teleports = new List<GameObject>();
+	private NetworkList<NetworkObjectReference> wells = new NetworkList<NetworkObjectReference>();
+	private NetworkList<NetworkObjectReference> teleports = new NetworkList<NetworkObjectReference>();
 
 	private void Awake() {
 		if (Instance == null)
@@ -276,7 +276,9 @@ public class OnlineGameManager : NetworkBehaviour{
 				}
 			} while (invalidSpawn);
 
-			wells.Add(Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+			GameObject wellGameObject = Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
+			wellGameObject.GetComponent<NetworkObject>().Spawn();
+			wells.Add(wellGameObject);
 			wellsCounter++;
 		} while (wellsCounter < wellsToSpawn);
 	}
@@ -315,7 +317,9 @@ public class OnlineGameManager : NetworkBehaviour{
 					invalidSpawn = IsOnTeleport(teleportSpawnGridPosition);
 			} while (invalidSpawn);
 
-			teleports.Add(Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+			GameObject teleportGameObject = Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
+			teleportGameObject.GetComponent<NetworkObject>().Spawn();
+			teleports.Add(teleportGameObject);
 			teleportsCounter++;
 		} while (teleportsCounter < teleportsToSpawn);
 	}
@@ -363,6 +367,50 @@ public class OnlineGameManager : NetworkBehaviour{
 			fogOfWar.SetTile(newGridPosition, null);
 		Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
 		StartCoroutine(Wait(playerGridPosition));
+	}
+
+	[ServerRpc(RequireOwnership = false)]
+	public void TeleportEnemyServerRpc() {
+		float randomSpawnX;
+		float randomSpawnY;
+		bool invalidSpawn = false;
+		Vector3Int newGridPosition;
+		Vector3Int playerGridPosition;
+
+		do {
+			randomSpawnX = Random.Range(-9, 11) - 0.5f;
+			randomSpawnY = Random.Range(-9, 11) - 0.5f;
+
+			newGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0f));
+			playerGridPosition = road.WorldToCell(player.transform.position);
+
+			// Check tile validity
+			invalidSpawn = IsInCurveOrWall(newGridPosition);
+
+			// Check if it was teleported in the same position of another teleportable object
+			if (!invalidSpawn) {
+				if (newGridPosition == playerGridPosition)
+					invalidSpawn = true;
+
+				// Check if it was teleported in the same position of a well
+				if (!invalidSpawn)
+					invalidSpawn = IsOnWell(newGridPosition);
+
+				// Check if it was teleported in the same position of a teleport
+				if (!invalidSpawn)
+					invalidSpawn = IsOnTeleport(newGridPosition);
+			}
+		} while (invalidSpawn);
+
+		GameObject enemy = this.enemy.Value;
+		enemy.transform.position = new Vector3(randomSpawnX, randomSpawnY, 0f);
+		this.enemy.Value = enemy;
+	}
+
+	[ServerRpc(RequireOwnership = false)]
+	public void DestroyEnemyServerRpc() {
+		GameObject enemy = this.enemy.Value;
+		Destroy(enemy);
 	}
 
 	// Wait before checking nearby objects after teleport

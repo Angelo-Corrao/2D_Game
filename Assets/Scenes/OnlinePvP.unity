@@ -8858,6 +8858,16 @@ MonoBehaviour:
       SourcePrefabToOverride: {fileID: 1869361861601236656, guid: 7b87a78a1b8b09a499eb25452a3351b1, type: 3}
       SourceHashToOverride: 0
       OverridingTargetPrefab: {fileID: 0}
+    - Override: 0
+      Prefab: {fileID: 579759990760089652, guid: 7b9c9bb0f278c704189bd711a0ff6a6c, type: 3}
+      SourcePrefabToOverride: {fileID: 1869361861601236656, guid: 7b87a78a1b8b09a499eb25452a3351b1, type: 3}
+      SourceHashToOverride: 0
+      OverridingTargetPrefab: {fileID: 0}
+    - Override: 0
+      Prefab: {fileID: 7567657070928215490, guid: 0104ffadda0869c4bb1fa339ad2cdb29, type: 3}
+      SourcePrefabToOverride: {fileID: 0}
+      SourceHashToOverride: 0
+      OverridingTargetPrefab: {fileID: 0}
     TickRate: 30
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
@@ -8974,7 +8984,6 @@ MonoBehaviour:
   waitMatchStart: {fileID: 1803807424}
   activeProjectiles: []
   checkActiveProjectiles: 0
-  enemy: {fileID: 0}
   canPause: 1
   isGamePaused: 0
   isEnemyAlive: 1
