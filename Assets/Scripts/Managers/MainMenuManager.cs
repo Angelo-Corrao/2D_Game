@@ -15,6 +15,9 @@ public class MainMenuManager : MonoBehaviour, IDataPersistence {
 	[HideInInspector]
 	public GameMode gameMode;
 
+	[HideInInspector]
+	public bool isHost;
+
 	private bool saveAlreadyExists = false;
 	private bool hasToSave = true;
 
@@ -86,6 +89,11 @@ public class MainMenuManager : MonoBehaviour, IDataPersistence {
 		#else
 			Application.Quit();
 		#endif
+	}
+
+	public void SetHost(bool isHost) {
+		this.isHost = isHost;
+		SceneManager.LoadScene(3);
 	}
 
 	private void OnApplicationQuit() {

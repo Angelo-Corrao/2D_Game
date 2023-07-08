@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ProceduralMap.unity
     guid: 32c63e479a0ed98498504d57982bbe2a
+  - enabled: 1
+    path: Assets/Scenes/OnlinePvP.unity
+    guid: 254cc7239ea26024fba41f0d0d6b715b
   m_configObjects: {}
