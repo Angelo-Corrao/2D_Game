@@ -29,6 +29,7 @@ public class OnlineGameManager : NetworkBehaviour{
 	public Canvas gameOverUI;
 	public AudioMixerSnapshot pausedSnapshot;
 	public AudioMixerSnapshot unpausedSnapshot;
+	public Canvas waitMatchStart;
 
 	[HideInInspector]
 	public List<Projectile> activeProjectiles;
@@ -52,6 +53,9 @@ public class OnlineGameManager : NetworkBehaviour{
 	public SerializableMatrix<bool> visitedCells = new SerializableMatrix<bool>();
 	[HideInInspector]
 	public NetworkVariable<int> activePlayer = new NetworkVariable<int>(1, NetworkVariableReadPermission.Everyone,
+		NetworkVariableWritePermission.Owner);
+	[HideInInspector]
+	public NetworkVariable<bool> isMatchStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
 		NetworkVariableWritePermission.Owner);
 
 	private PlayerInput playerInput;
@@ -96,6 +100,11 @@ public class OnlineGameManager : NetworkBehaviour{
 		else
 			NetworkManager.Singleton.StartClient();
 
+		if (IsServer) {
+			isGamePaused = true;
+			waitMatchStart.gameObject.SetActive(true);
+		}
+
 		// Spawn all the game elements
 		SpawnEnemy(true);
 		SpawnWells(true);
@@ -121,6 +130,16 @@ public class OnlineGameManager : NetworkBehaviour{
 	}
 
 	private void Update() {
+		if (!isMatchStarted.Value) {
+			if (IsServer) {
+				if (NetworkManager.Singleton.ConnectedClients.Count == 2) {
+					waitMatchStart.gameObject.SetActive(false);
+					isGamePaused = false;
+					isMatchStarted.Value = true;
+				}
+			}
+		}
+
 		// When the the last projectile is shot check until there is no projectile on the map, than is Game Over
 		if (checkActiveProjectiles) {
 			if (activeProjectiles.Count == 0) {

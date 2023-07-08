@@ -55,29 +55,14 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		playerInput.Disable();
 	}
 
+	private void Start() {
+		if (!IsServer)
+			CheckTurn();
+	}
+
 	private void Update() {
-		if (IsServer) {
-			if (OnlineGameManager.Instance.activePlayer.Value == 2) {
-				playerTurn.gameObject.SetActive(true);
-				turnText.text = "PLAYER " + OnlineGameManager.Instance.activePlayer.Value.ToString() + " TURN";
-				OnlineGameManager.Instance.isGamePaused = true;
-			}
-			else {
-				playerTurn.gameObject.SetActive(false);
-				OnlineGameManager.Instance.isGamePaused = false;
-			}
-		}
-		else {
-			if (OnlineGameManager.Instance.activePlayer.Value == 1) {
-				playerTurn.gameObject.SetActive(true);
-				turnText.text = "PLAYER " + OnlineGameManager.Instance.activePlayer.Value.ToString() + " TURN";
-				OnlineGameManager.Instance.isGamePaused = true;
-			}
-			else {
-				playerTurn.gameObject.SetActive(false);
-				OnlineGameManager.Instance.isGamePaused = false;
-			}
-		}
+		if (OnlineGameManager.Instance.isMatchStarted.Value)
+			CheckTurn();
 
 		InCurveBehaviour();
 		if (hasToTeleport) {
@@ -157,6 +142,32 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		OnlineGameManager.Instance.visitedCells.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
 
 		OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
+		// call checkTurn() when the server is updated
+	}
+
+	private void CheckTurn() {
+		if (IsServer) {
+			if (OnlineGameManager.Instance.activePlayer.Value == 2) {
+				playerTurn.gameObject.SetActive(true);
+				turnText.text = "PLAYER " + OnlineGameManager.Instance.activePlayer.Value.ToString() + " TURN";
+				OnlineGameManager.Instance.isGamePaused = true;
+			}
+			else {
+				playerTurn.gameObject.SetActive(false);
+				OnlineGameManager.Instance.isGamePaused = false;
+			}
+		}
+		else {
+			if (OnlineGameManager.Instance.activePlayer.Value == 1) {
+				playerTurn.gameObject.SetActive(true);
+				turnText.text = "PLAYER " + OnlineGameManager.Instance.activePlayer.Value.ToString() + " TURN";
+				OnlineGameManager.Instance.isGamePaused = true;
+			}
+			else {
+				playerTurn.gameObject.SetActive(false);
+				OnlineGameManager.Instance.isGamePaused = false;
+			}
+		}
 	}
 
 	private void CanMove() {
