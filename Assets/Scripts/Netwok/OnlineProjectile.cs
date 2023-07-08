@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -35,7 +36,8 @@ public class OnlineProjectile : MonoBehaviour {
 			StartCoroutine(MoveBySteps());
 		else {
 			OnlineGameManager.Instance.activeProjectiles.Remove(this);
-			OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+			GameObject enemy = OnlineGameManager.Instance.enemy.Value;
+			OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
 			projDestroyed?.Invoke();
 			Destroy(gameObject);
 		}
@@ -71,7 +73,8 @@ public class OnlineProjectile : MonoBehaviour {
 				Move();
 			else {
 				OnlineGameManager.Instance.activeProjectiles.Remove(this);
-				OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+				GameObject enemy = OnlineGameManager.Instance.enemy.Value;
+				OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
 				projDestroyed?.Invoke();
 				Destroy(gameObject);
 			}
@@ -204,6 +207,7 @@ public class OnlineProjectile : MonoBehaviour {
 	}
 
 	private void OnCollisionEnter2D(Collision2D collision) {
+		GameObject enemy = OnlineGameManager.Instance.enemy.Value;
 		if (collision.gameObject.CompareTag("Player")) {
 			AudioManager.Instance.PlaySFX("Dead");
 			OnlineGameManager.Instance.isPlayerAlive = false;
@@ -217,11 +221,11 @@ public class OnlineProjectile : MonoBehaviour {
 			OnlineGameManager.Instance.isEnemyAlive = false;
 			if (OnlineGameManager.Instance.isPlayerAlive)
 				OnlineGameManager.Instance.Victory();
-			Destroy(OnlineGameManager.Instance.enemy);
+			Destroy(enemy);
 		}
 
 		OnlineGameManager.Instance.activeProjectiles.Remove(this);
-		OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+		OnlineGameManager.Instance.Teleport(enemy.GetComponent<Enemy>());
 		projDestroyed?.Invoke();
 		Destroy(gameObject);
 	}

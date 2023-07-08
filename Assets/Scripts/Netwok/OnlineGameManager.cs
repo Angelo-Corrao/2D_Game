@@ -38,7 +38,7 @@ public class OnlineGameManager : NetworkBehaviour{
 	[HideInInspector]
 	public List<ITeleportable> teleportables = new List<ITeleportable>();
 	[HideInInspector]
-	public GameObject enemy;
+	public NetworkVariable<NetworkObjectReference> enemy = new NetworkVariable<NetworkObjectReference>();
 	[HideInInspector]
 	public bool canPause = true;
 	[HideInInspector]
@@ -103,12 +103,15 @@ public class OnlineGameManager : NetworkBehaviour{
 		if (IsServer) {
 			isGamePaused = true;
 			waitMatchStart.gameObject.SetActive(true);
-		}
 
-		// Spawn all the game elements
-		SpawnEnemy(true);
-		SpawnWells(true);
-		SpawnTeleports(true);
+			// Spawn all the game elements
+			SpawnEnemy();
+			SpawnWells();
+			SpawnTeleports();
+		}
+		else {
+
+		}
 
 		// Update the fog of war for the player's start position 
 		AudioManager.Instance.PlayMusic("In Game");
@@ -119,6 +122,7 @@ public class OnlineGameManager : NetworkBehaviour{
 
 		// Update the list with all teleportable objects and check nearby objects
 		teleportables.Add(player.GetComponent<OnlineCarController>());
+		GameObject enemy = this.enemy.Value;
 		teleportables.Add(enemy.GetComponent<Enemy>());
 		CheckNearbyObjects(startGridPosition);
 
@@ -215,120 +219,105 @@ public class OnlineGameManager : NetworkBehaviour{
 		canPause = value;
 	}
 
-	private void SpawnEnemy(bool isNewGame) {
+	private void SpawnEnemy() {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 
-		if (isNewGame) {
-			do {
-				randomSpawnX = Random.Range(-9, 11) - 0.5f;
-				randomSpawnY = Random.Range(-9, 11) - 0.5f;
+		do {
+			randomSpawnX = Random.Range(-9, 11) - 0.5f;
+			randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-				Vector3Int enemySpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
-				// Check tile validity
-				invalidSpawn = IsInCurveOrWall(enemySpawnGridPosition);
-				// Check if it was spawned in the same position of the player
-				if (!invalidSpawn) {
-					if (enemySpawnGridPosition == playerGridPosition)
-						invalidSpawn = true;
-					else
-						invalidSpawn = false;
-				}
-			} while (invalidSpawn);
+			Vector3Int enemySpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+			Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+			// Check tile validity
+			invalidSpawn = IsInCurveOrWall(enemySpawnGridPosition);
+			// Check if it was spawned in the same position of the player
+			if (!invalidSpawn) {
+				if (enemySpawnGridPosition == playerGridPosition)
+					invalidSpawn = true;
+				else
+					invalidSpawn = false;
+			}
+		} while (invalidSpawn);
 
-			enemy = Instantiate(enemyPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
-		}
-		else {
-			enemy = Instantiate(enemyPrefab, DataPersistenceManager.Instance.gameData.enemyPosition, Quaternion.identity);
-		}
+		GameObject enemyGameObject = Instantiate(enemyPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity);
+		enemyGameObject.GetComponent<NetworkObject>().Spawn();
+		enemy.Value = enemyGameObject;
 	}
 
-	private void SpawnWells(bool isNewGame) {
+	private void SpawnWells() {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 		int wellsCounter = 0;
 
-		if (isNewGame) {
+		do {
 			do {
-				do {
-					randomSpawnX = Random.Range(-9, 11) - 0.5f;
-					randomSpawnY = Random.Range(-9, 11) - 0.5f;
+				randomSpawnX = Random.Range(-9, 11) - 0.5f;
+				randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-					Vector3Int wellSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-					Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
-					Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+				Vector3Int wellSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+				GameObject enemy = this.enemy.Value;
+				Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
+				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
 
-					// Check tile validity
-					invalidSpawn = IsInCurveOrWall(wellSpawnGridPosition);
+				// Check tile validity
+				invalidSpawn = IsInCurveOrWall(wellSpawnGridPosition);
 
-					// Check if it was spawned in the same position of the enemy or the player
-					if (!invalidSpawn) {
-						if (wellSpawnGridPosition == enemyGridPosition || wellSpawnGridPosition == playerGridPosition)
-							invalidSpawn = true;
+				// Check if it was spawned in the same position of the enemy or the player
+				if (!invalidSpawn) {
+					if (wellSpawnGridPosition == enemyGridPosition || wellSpawnGridPosition == playerGridPosition)
+						invalidSpawn = true;
 
-						// Check if it was spawned in the same position of another well
-						else
-							invalidSpawn = IsOnWell(wellSpawnGridPosition);
-					}
-				} while (invalidSpawn);
+					// Check if it was spawned in the same position of another well
+					else
+						invalidSpawn = IsOnWell(wellSpawnGridPosition);
+				}
+			} while (invalidSpawn);
 
-				wells.Add(Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
-				wellsCounter++;
-			} while (wellsCounter < wellsToSpawn);
-		}
-		else {
-			foreach (Vector3 pos in DataPersistenceManager.Instance.gameData.wellsPosition) {
-				wells.Add(Instantiate(wellPrefab, pos, Quaternion.identity));
-			}
-		}
+			wells.Add(Instantiate(wellPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+			wellsCounter++;
+		} while (wellsCounter < wellsToSpawn);
 	}
 
-	private void SpawnTeleports(bool isNewGame) {
+	private void SpawnTeleports() {
 		float randomSpawnX;
 		float randomSpawnY;
 		bool invalidSpawn = false;
 		int teleportsCounter = 0;
 
-		if (isNewGame) {
+		do {
 			do {
-				do {
-					randomSpawnX = Random.Range(-9, 11) - 0.5f;
-					randomSpawnY = Random.Range(-9, 11) - 0.5f;
+				randomSpawnX = Random.Range(-9, 11) - 0.5f;
+				randomSpawnY = Random.Range(-9, 11) - 0.5f;
 
-					Vector3Int teleportSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
-					Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
-					Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
+				Vector3Int teleportSpawnGridPosition = road.WorldToCell(new Vector3(randomSpawnX, randomSpawnY, 0));
+				GameObject enemy = this.enemy.Value;
+				Vector3Int enemyGridPosition = road.WorldToCell(enemy.transform.position);
+				Vector3Int playerGridPosition = road.WorldToCell(player.transform.position);
 
-					// Check tile validity
-					invalidSpawn = IsInCurveOrWall(teleportSpawnGridPosition);
+				// Check tile validity
+				invalidSpawn = IsInCurveOrWall(teleportSpawnGridPosition);
 
-					// Check if it was spawned in the same position of the enemy or the player
-					if (!invalidSpawn) {
-						if (teleportSpawnGridPosition == enemyGridPosition || teleportSpawnGridPosition == playerGridPosition)
-							invalidSpawn = true;
+				// Check if it was spawned in the same position of the enemy or the player
+				if (!invalidSpawn) {
+					if (teleportSpawnGridPosition == enemyGridPosition || teleportSpawnGridPosition == playerGridPosition)
+						invalidSpawn = true;
 
-						// Check if it was spawned in the same position of a well
-						else
-							invalidSpawn = IsOnWell(teleportSpawnGridPosition);
-					}
+					// Check if it was spawned in the same position of a well
+					else
+						invalidSpawn = IsOnWell(teleportSpawnGridPosition);
+				}
 
-					// Check if it was spawned in the same position of another teleport
-					if (!invalidSpawn)
-						invalidSpawn = IsOnTeleport(teleportSpawnGridPosition);
-				} while (invalidSpawn);
+				// Check if it was spawned in the same position of another teleport
+				if (!invalidSpawn)
+					invalidSpawn = IsOnTeleport(teleportSpawnGridPosition);
+			} while (invalidSpawn);
 
-				teleports.Add(Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
-				teleportsCounter++;
-			} while (teleportsCounter < teleportsToSpawn);
-		}
-		else {
-			foreach (Vector3 pos in DataPersistenceManager.Instance.gameData.teleportsPosition) {
-				teleports.Add(Instantiate(teleportPrefab, pos, Quaternion.identity));
-			}
-		}
+			teleports.Add(Instantiate(teleportPrefab, new Vector3(randomSpawnX, randomSpawnY, 0), Quaternion.identity));
+			teleportsCounter++;
+		} while (teleportsCounter < teleportsToSpawn);
 	}
 
 	/*
@@ -531,6 +520,7 @@ public class OnlineGameManager : NetworkBehaviour{
 	}
 
 	public void ShowEnemy() {
+		GameObject enemy = this.enemy.Value;
 		Vector3Int enemyGridPosition = fogOfWar.WorldToCell(enemy.transform.position);
 		if (fogOfWar.GetTile(enemyGridPosition) != null)
 			fogOfWar.SetTile(enemyGridPosition, null);
