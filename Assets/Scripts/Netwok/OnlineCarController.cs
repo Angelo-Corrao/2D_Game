@@ -142,7 +142,6 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		OnlineGameManager.Instance.visitedCells.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
 
 		OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
-		// call checkTurn() when the server is updated
 	}
 
 	private void CheckTurn() {

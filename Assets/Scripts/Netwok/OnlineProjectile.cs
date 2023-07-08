@@ -1,11 +1,13 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Projectile : MonoBehaviour {
+public class OnlineProjectile : MonoBehaviour {
 	public Tilemap road;
 	public float totSteps = 10;
 	public float animationTime = 0.1f;
+	public static event Action projDestroyed;
 
 	[HideInInspector]
 	public Vector2 direction;
@@ -32,8 +34,9 @@ public class Projectile : MonoBehaviour {
 		if (CanMove())
 			StartCoroutine(MoveBySteps());
 		else {
-			GameManager.Instance.activeProjectiles.Remove(this);
-			GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
+			OnlineGameManager.Instance.activeProjectiles.Remove(this);
+			OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+			projDestroyed?.Invoke();
 			Destroy(gameObject);
 		}
 	}
@@ -67,8 +70,9 @@ public class Projectile : MonoBehaviour {
 			if (road.GetTile(actualGridPosition) != null)
 				Move();
 			else {
-				GameManager.Instance.activeProjectiles.Remove(this);
-				GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
+				OnlineGameManager.Instance.activeProjectiles.Remove(this);
+				OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+				projDestroyed?.Invoke();
 				Destroy(gameObject);
 			}
 		}
@@ -202,23 +206,23 @@ public class Projectile : MonoBehaviour {
 	private void OnCollisionEnter2D(Collision2D collision) {
 		if (collision.gameObject.CompareTag("Player")) {
 			AudioManager.Instance.PlaySFX("Dead");
-			GameManager.Instance.isPlayerAlive = false;
-			GameManager.Instance.GameOver();
-			Destroy(GameManager.Instance.player);
-			Destroy(gameObject);
+			OnlineGameManager.Instance.isPlayerAlive = false;
+			OnlineGameManager.Instance.GameOver();
+			Destroy(OnlineGameManager.Instance.player);
 		}
 
 		if (collision.gameObject.CompareTag("Enemy")) {
-			GameManager.Instance.ShowEnemy();
+			OnlineGameManager.Instance.ShowEnemy();
 			AudioManager.Instance.PlaySFX("Win");
-			GameManager.Instance.isEnemyAlive = false;
-			if (GameManager.Instance.isPlayerAlive)
-				GameManager.Instance.Victory();
-			Destroy(GameManager.Instance.enemy);
+			OnlineGameManager.Instance.isEnemyAlive = false;
+			if (OnlineGameManager.Instance.isPlayerAlive)
+				OnlineGameManager.Instance.Victory();
+			Destroy(OnlineGameManager.Instance.enemy);
 		}
 
-		GameManager.Instance.activeProjectiles.Remove(this);
-		GameManager.Instance.Teleport(GameManager.Instance.enemy.GetComponent<Enemy>());
+		OnlineGameManager.Instance.activeProjectiles.Remove(this);
+		OnlineGameManager.Instance.Teleport(OnlineGameManager.Instance.enemy.GetComponent<Enemy>());
+		projDestroyed?.Invoke();
 		Destroy(gameObject);
 	}
 }

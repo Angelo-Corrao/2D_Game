@@ -32,7 +32,7 @@ public class OnlineGameManager : NetworkBehaviour{
 	public Canvas waitMatchStart;
 
 	[HideInInspector]
-	public List<Projectile> activeProjectiles;
+	public List<OnlineProjectile> activeProjectiles;
 	[HideInInspector]
 	public bool checkActiveProjectiles;
 	[HideInInspector]

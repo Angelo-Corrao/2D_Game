@@ -10179,6 +10179,8 @@ MonoBehaviour:
       value: 0
   activePlayer:
     m_InternalValue: 1
+  isMatchStarted:
+    m_InternalValue: 0
 --- !u!1 &1130560802
 GameObject:
   m_ObjectHideFlags: 0
@@ -10605,7 +10607,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1341467532
 Transform:
   m_ObjectHideFlags: 0
@@ -14895,7 +14897,7 @@ GameObject:
   - component: {fileID: 1428779405}
   - component: {fileID: 1428779407}
   - component: {fileID: 1428779403}
-  - component: {fileID: 1428779404}
+  - component: {fileID: 1428779409}
   - component: {fileID: 1428779408}
   m_Layer: 2
   m_Name: Player
@@ -15005,22 +15007,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 1428779402}
   currentAnimation: 
---- !u!114 &1428779404
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428779398}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7849ba4734bba14189d5c4e94f1b6eb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireRate: 1
-  carController: {fileID: 0}
-  projectilePrefab: {fileID: 6816561318872881764, guid: b9e9c1b52c18ce049b94afc1a8bd99a1, type: 3}
-  road: {fileID: 684697042}
 --- !u!61 &1428779405
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -15105,6 +15091,21 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
+--- !u!114 &1428779409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1428779398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bcfb91364f932342a03e7792050b547, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  carController: {fileID: 1428779407}
+  projectilePrefab: {fileID: 6816561318872881764, guid: 47febf4727a9e0e4d8db80e890f9fcd4, type: 3}
+  road: {fileID: 684697042}
 --- !u!1 &1553411245
 GameObject:
   m_ObjectHideFlags: 0
