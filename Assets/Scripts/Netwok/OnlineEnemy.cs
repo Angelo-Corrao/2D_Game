@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Enemy : MonoBehaviour, ITeleportable {
+public class OnlineEnemy : MonoBehaviour, ITeleportable {
 	public TileBase fogTile;
 
 	public bool isOnOtherTeleportableObjects(Vector3 newPos) {
-		Tilemap fogOfWar = GameManager.Instance.fogOfWar;
+		Tilemap fogOfWar = OnlineGameManager.Instance.fogOfWar;
 		bool isThereAValidPosition = IsThereAValdiPosition(fogOfWar);
 
 		Vector3Int newPosGridPosition = fogOfWar.WorldToCell(newPos);
@@ -38,7 +38,7 @@ public class Enemy : MonoBehaviour, ITeleportable {
 			for (int j = -10; j < 10; j++) {
 				Vector3Int gridPosition = fogOfWar.WorldToCell(new Vector3(i, j, 0));
 				if (fogOfWar.GetTile(gridPosition) != null) {
-					if (!GameManager.Instance.IsOnWell(gridPosition) && !GameManager.Instance.IsOnTeleport(gridPosition)) {
+					if (!OnlineGameManager.Instance.IsOnWell(gridPosition) && !OnlineGameManager.Instance.IsOnTeleport(gridPosition)) {
 						return true;
 					}
 				}
@@ -48,7 +48,7 @@ public class Enemy : MonoBehaviour, ITeleportable {
 	}
 
 	private bool CompareTeleportableObjects(Vector3 newPos) {
-		List<ITeleportable> teleportables = GameManager.Instance.teleportables;
+		List<ITeleportable> teleportables = OnlineGameManager.Instance.teleportables;
 		for (int i = 0; i < teleportables.Count; i++) {
 			// This check if i'm not comparing the same object
 			if (this != teleportables[i]) {

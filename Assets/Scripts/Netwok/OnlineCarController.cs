@@ -31,6 +31,7 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 	private float oneStepDistance;
 	private float timeBetweenSteps;
 	private bool hasToTeleport = false;
+	private bool hasAlreadyMove = false;
 
 	private void Awake() {
 		timeBetweenSteps = animationTime / totSteps;
@@ -40,7 +41,7 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 
 		playerInput = new PlayerInput();
 		playerInput.Car.Movement.performed += ctx => {
-			if (!isMoving && !OnlineGameManager.Instance.isGamePaused) {
+			if (!isMoving && !hasAlreadyMove && !OnlineGameManager.Instance.isGamePaused) {
 				direction = ctx.ReadValue<Vector2>();
 				CanMove();
 			}
@@ -76,6 +77,7 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 
 	private void Move(Vector3Int nextGridPosition) {
 		isMoving = true;
+		hasAlreadyMove = true;
 		fogOfWar.SetTile(nextGridPosition, null);
 		// If there is a wall near the cell the player moved into it will also be revealed from the fog of war
 		Vector3Int upGridPosition = road.WorldToCell(nextGridPosition + Vector3.up);
@@ -140,8 +142,6 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		// + 10 is nedeed because the grid in world space goes from -10 to +10 and the matrix starts from the position [0, 0]
 		Vector3 cell = (Vector3)actualGridPosition;
 		OnlineGameManager.Instance.visitedCells.matrix[((int)cell.x) + 10, ((int)cell.y) + 10] = true;
-
-		OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
 	}
 
 	private void CheckTurn() {
@@ -319,8 +319,12 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 			if (road.GetTile(actualGridPosition).name != "roadNE" &&
 				road.GetTile(actualGridPosition).name != "roadNW" &&
 				road.GetTile(actualGridPosition).name != "roadSE" &&
-				road.GetTile(actualGridPosition).name != "roadSW")
+				road.GetTile(actualGridPosition).name != "roadSW") {
 				checkCurve = false;
+				// Change player turn only if he's not in a curve
+				OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
+				hasAlreadyMove = false;
+			}
 		}
 	}
 

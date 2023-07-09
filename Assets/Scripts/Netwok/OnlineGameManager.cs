@@ -59,6 +59,7 @@ public class OnlineGameManager : NetworkBehaviour {
 		NetworkVariableWritePermission.Owner);
 
 	private PlayerInput playerInput;
+	private OnlineCarController carController;
 	private NetworkList<NetworkObjectReference> wells = new NetworkList<NetworkObjectReference>();
 	private NetworkList<NetworkObjectReference> teleports = new NetworkList<NetworkObjectReference>();
 
@@ -83,6 +84,8 @@ public class OnlineGameManager : NetworkBehaviour {
 				visitedCells.matrix[i, j] = false;
 			}
 		}
+
+		carController = player.GetComponent<OnlineCarController>();
 	}
 
 	private void OnEnable() {
@@ -109,9 +112,6 @@ public class OnlineGameManager : NetworkBehaviour {
 			SpawnWells();
 			SpawnTeleports();
 		}
-		else {
-
-		}
 
 		// Update the fog of war for the player's start position 
 		AudioManager.Instance.PlayMusic("In Game");
@@ -123,17 +123,21 @@ public class OnlineGameManager : NetworkBehaviour {
 		// Update the list with all teleportable objects and check nearby objects
 		teleportables.Add(player.GetComponent<OnlineCarController>());
 		GameObject enemy = this.enemy.Value;
-		teleportables.Add(enemy.GetComponent<Enemy>());
+		teleportables.Add(enemy.GetComponent<OnlineEnemy>());
 		CheckNearbyObjects(startGridPosition);
 
 		// Update ammo UI
-		OnlineCarController carController = player.GetComponent<OnlineCarController>();
 		totProjectilesText.text = carController.totProjectiles.ToString();
 		UpdateAmmoUI(carController.projectilesCounter);
 		checkActiveProjectiles = false;
 	}
 
 	private void Update() {
+		if (carController.totProjectiles != 0) {
+			totProjectilesText.text = carController.totProjectiles.ToString();
+			UpdateAmmoUI(carController.projectilesCounter);
+		}
+
 		if (!isMatchStarted.Value) {
 			if (IsServer) {
 				if (NetworkManager.Singleton.ConnectedClients.Count == 2) {

@@ -8854,7 +8854,7 @@ MonoBehaviour:
     PlayerPrefab: {fileID: 0}
     NetworkPrefabs:
     - Override: 0
-      Prefab: {fileID: 1869361861601236656, guid: 7b87a78a1b8b09a499eb25452a3351b1, type: 3}
+      Prefab: {fileID: 1869361861601236656, guid: 5ba619a2a61c2164c84769fbfc3a2a4f, type: 3}
       SourcePrefabToOverride: {fileID: 1869361861601236656, guid: 7b87a78a1b8b09a499eb25452a3351b1, type: 3}
       SourceHashToOverride: 0
       OverridingTargetPrefab: {fileID: 0}
@@ -8962,7 +8962,7 @@ MonoBehaviour:
   road: {fileID: 684697042}
   fogOfWar: {fileID: 1341467534}
   player: {fileID: 1428779398}
-  enemyPrefab: {fileID: 1869361861601236656, guid: 7b87a78a1b8b09a499eb25452a3351b1, type: 3}
+  enemyPrefab: {fileID: 1869361861601236656, guid: 5ba619a2a61c2164c84769fbfc3a2a4f, type: 3}
   wellPrefab: {fileID: 579759990760089652, guid: 7b9c9bb0f278c704189bd711a0ff6a6c, type: 3}
   teleportPrefab: {fileID: 7567657070928215490, guid: 0104ffadda0869c4bb1fa339ad2cdb29, type: 3}
   wellsToSpawn: 6

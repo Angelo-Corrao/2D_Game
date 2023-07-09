@@ -80,8 +80,8 @@ public class OnlineShoot : NetworkBehaviour {
 	}
 
 	private void EndTurn() {
+		OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
 		canShoot = true;
 		carController.isMoving = false;
-		OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
 	}
 }
