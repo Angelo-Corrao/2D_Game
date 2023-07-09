@@ -8515,8 +8515,8 @@ MonoBehaviour:
   enemyPrefab: {fileID: 1869361861601236656, guid: 5ba619a2a61c2164c84769fbfc3a2a4f, type: 3}
   wellPrefab: {fileID: 579759990760089652, guid: 7b9c9bb0f278c704189bd711a0ff6a6c, type: 3}
   teleportPrefab: {fileID: 7567657070928215490, guid: 0104ffadda0869c4bb1fa339ad2cdb29, type: 3}
-  wellsToSpawn: 6
-  teleportsToSpawn: 3
+  wellsToSpawn: 20
+  teleportsToSpawn: 20
   enemySprite: {fileID: -560126043, guid: 0087fd1ceb6fa9846924ea767e3dc974, type: 3}
   wellSprite: {fileID: -783910504, guid: eb36f9a8633bab947904bae87fe46f7f, type: 3}
   teleportSprite: {fileID: -583762045, guid: 860e40f8ea8a28247ae5c5a13e98c145, type: 3}
@@ -8534,7 +8534,6 @@ MonoBehaviour:
   waitMatchStart: {fileID: 1803807424}
   activeProjectiles: []
   checkActiveProjectiles: 0
-  canPause: 1
   isGamePaused: 0
   isEnemyAlive: 1
   isPlayerAlive: 1

@@ -40,8 +40,6 @@ public class OnlineGameManager : NetworkBehaviour {
 	[HideInInspector]
 	public NetworkVariable<NetworkObjectReference> enemy = new NetworkVariable<NetworkObjectReference>();
 	[HideInInspector]
-	public bool canPause = true;
-	[HideInInspector]
 	public bool isGamePaused = false; // Used to block player's input when the game is in paused
 	[HideInInspector]
 	public bool isEnemyAlive = true;
@@ -59,28 +57,18 @@ public class OnlineGameManager : NetworkBehaviour {
 	public NetworkVariable<bool> isMatchStarted = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
 		NetworkVariableWritePermission.Owner);
 
-	private PlayerInput playerInput;
 	private OnlineCarController carController;
 	private NetworkList<NetworkObjectReference> wells = new NetworkList<NetworkObjectReference>();
 	private NetworkList<NetworkObjectReference> teleports = new NetworkList<NetworkObjectReference>();
 	private NetworkVariable<int> winningPlayer = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
 		NetworkVariableWritePermission.Owner);
+	private bool isInitialObjectCheckingCompleted = false;
 
 	private void Awake() {
 		if (Instance == null)
 			Instance = this;
 		else
 			Destroy(gameObject);
-
-		playerInput = new PlayerInput();
-		playerInput.Car.Pause.performed += _ => {
-			if (canPause) {
-				if (!isGamePaused)
-					Pause();
-				else
-					Unpause();
-			}
-		};
 
 		for (int i = 0; i < 20; i++) {
 			for (int j = 0; j < 20; j++) {
@@ -89,14 +77,6 @@ public class OnlineGameManager : NetworkBehaviour {
 		}
 
 		carController = player.GetComponent<OnlineCarController>();
-	}
-
-	private void OnEnable() {
-		playerInput.Enable();
-	}
-
-	private void OnDisable() {
-		playerInput.Disable();
 	}
 
 	private void Start() {
@@ -136,9 +116,19 @@ public class OnlineGameManager : NetworkBehaviour {
 	}
 
 	private void Update() {
+		// Check nedeed for latency problems
 		if (carController.totProjectiles != 0) {
 			totProjectilesText.text = carController.totProjectiles.ToString();
 			UpdateAmmoUI(carController.projectilesCounter);
+		}
+
+		// Check nedeed for latency problems
+		if (teleports.Count != 0) {
+			if (!isInitialObjectCheckingCompleted) {
+				Vector3Int startGridPosition = road.WorldToCell(player.transform.position);
+				CheckNearbyObjects(startGridPosition);
+				isInitialObjectCheckingCompleted = true;
+			}
 		}
 
 		if (!isMatchStarted.Value) {
@@ -185,11 +175,6 @@ public class OnlineGameManager : NetworkBehaviour {
 			activePlayer.Value = 1;
 	}
 
-	public void Continue() {
-		AudioManager.Instance.PlaySFX("Button");
-		Unpause();
-	}
-
 	public void MainMenu() {
 		/*
 		 * If the player comes back to main menu after the game end (Victory or Game Over) delete the save file
@@ -201,29 +186,9 @@ public class OnlineGameManager : NetworkBehaviour {
 			FileDataHandler.Instance.Delete(Path.Combine(Application.persistentDataPath, DataPersistenceManager.Instance.fileName));
 
 		AudioManager.Instance.PlaySFX("Button");
-		Unpause();
+		//Unpause();
 		Cursor.lockState = CursorLockMode.None;
 		SceneManager.LoadScene(0);
-	}
-
-	public void Pause() {
-		isGamePaused = true;
-		pauseMenu.gameObject.SetActive(true);
-		Cursor.lockState = CursorLockMode.None;
-		pausedSnapshot.TransitionTo(0);
-		Time.timeScale = 0;
-	}
-
-	public void Unpause() {
-		isGamePaused = false;
-		pauseMenu.gameObject.SetActive(false);
-		Cursor.lockState = CursorLockMode.Locked;
-		unpausedSnapshot.TransitionTo(0f);
-		Time.timeScale = 1;
-	}
-
-	public void SetCanPause(bool value) {
-		canPause = value;
 	}
 
 	private void SpawnEnemy() {
@@ -583,7 +548,6 @@ public class OnlineGameManager : NetworkBehaviour {
 
 	[ServerRpc(RequireOwnership = false)]
 	public void VictoryServerRpc() {
-		canPause = false;
 		hasMatchEnded.Value = true;
 
 		if (activePlayer.Value == 1)
@@ -597,7 +561,6 @@ public class OnlineGameManager : NetworkBehaviour {
 
 	[ServerRpc(RequireOwnership = false)]
 	public void GameOverServerRpc() {
-		canPause = false;
 		hasMatchEnded.Value = true;
 
 		if (activePlayer.Value == 1)

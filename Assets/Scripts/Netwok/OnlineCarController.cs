@@ -182,61 +182,72 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		switch (road.GetTile(actualGridPosition).name) {
 			case "roadNEWS":
 				// Here the player can move in any direction
-				if (isCellNotEmpty(nextGridPosition))
+				if (isCellNotEmpty(nextGridPosition)) {
 					Move(nextGridPosition);
+					checkCurve = true;
+				}
 				break;
 
 			case "roadEW":
 				// Check if the player moved horizontally
 				if (direction.y == 0) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 
 			case "roadNS":
 				// Check if the player moved vertically
 				if (direction.x == 0) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 
 			case "roadNEW":
 				// The player can move in any direction except south
 				if (direction.y == 0 || direction.y == 1) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 
 			case "roadEWS":
 				// The player can move in any direction except north
 				if (direction.y == 0 || direction.y == -1) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 
 			case "roadNES":
 				// The player can move in any direction except west
 				if (direction.x == 0 || direction.x == 1) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 
 			case "roadNWS":
 				// The player can move in any direction except est
 				if (direction.x == 0 || direction.x == -1) {
-					if (isCellNotEmpty(nextGridPosition))
+					if (isCellNotEmpty(nextGridPosition)) {
 						Move(nextGridPosition);
+						checkCurve = true;
+					}
 				}
 				break;
 		}
-
-		// This is nedeed so we can check if the player has landed in a curve
-		checkCurve = true;
 	}
 
 	// Check if exist a tile in the road tilemap in the direction the player want to move
