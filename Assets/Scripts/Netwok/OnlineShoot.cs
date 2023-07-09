@@ -27,12 +27,12 @@ public class OnlineShoot : NetworkBehaviour {
 
 	private void OnEnable() {
 		playerInput.Enable();
-		OnlineProjectile.projDestroyed += () => EndTurn();
+		OnlineProjectile.projDestroyed += EndTurn;
 	}
 
 	private void OnDisable() {
 		playerInput.Disable();
-		OnlineProjectile.projDestroyed -= () => EndTurn();
+		OnlineProjectile.projDestroyed -= EndTurn;
 	}
 
 	private void Fire(Vector2 direction) {

@@ -130,6 +130,7 @@ public class OnlineGameManager : NetworkBehaviour {
 			}
 		}
 
+		// Wait for the client to connect to start the match
 		if (!isMatchStarted.Value) {
 			if (IsServer) {
 				if (NetworkManager.Singleton.ConnectedClients.Count == 2) {
