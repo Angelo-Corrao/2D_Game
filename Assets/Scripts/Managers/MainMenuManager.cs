@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [Serializable]
-public enum GameMode{
+public enum GameMode {
 	STANDARD = 0,
 	PROCEDURAL = 1
 }

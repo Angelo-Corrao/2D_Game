@@ -77,6 +77,7 @@ public class OnlineGameManager : NetworkBehaviour {
 		}
 
 		carController = player.GetComponent<OnlineCarController>();
+		enemy.OnValueChanged += SetEnemy;
 	}
 
 	private void Start() {
@@ -105,8 +106,6 @@ public class OnlineGameManager : NetworkBehaviour {
 
 		// Update the list with all teleportable objects and check nearby objects
 		teleportables.Add(player.GetComponent<OnlineCarController>());
-		GameObject enemy = this.enemy.Value;
-		teleportables.Add(enemy.GetComponent<OnlineEnemy>());
 		CheckNearbyObjects(startGridPosition);
 
 		// Update ammo UI
@@ -167,6 +166,11 @@ public class OnlineGameManager : NetworkBehaviour {
 		}
 	}
 
+	private void SetEnemy(NetworkObjectReference previous, NetworkObjectReference current) {
+		GameObject enemy = this.enemy.Value;
+		teleportables.Add(enemy.GetComponent<OnlineEnemy>());
+	}
+
 	[ServerRpc(RequireOwnership = false)]
 	public void ChangeActivePlayerServerRpc() {
 		if (activePlayer.Value == 1)
@@ -176,17 +180,8 @@ public class OnlineGameManager : NetworkBehaviour {
 	}
 
 	public void MainMenu() {
-		/*
-		 * If the player comes back to main menu after the game end (Victory or Game Over) delete the save file
-		 * so he can't click the continue button
-		 */
-		if (!hasMatchEnded.Value)
-			DataPersistenceManager.Instance.SaveGame();
-		else
-			FileDataHandler.Instance.Delete(Path.Combine(Application.persistentDataPath, DataPersistenceManager.Instance.fileName));
-
+		NetworkManager.Singleton.Shutdown();
 		AudioManager.Instance.PlaySFX("Button");
-		//Unpause();
 		Cursor.lockState = CursorLockMode.None;
 		SceneManager.LoadScene(0);
 	}
@@ -296,14 +291,6 @@ public class OnlineGameManager : NetworkBehaviour {
 		} while (teleportsCounter < teleportsToSpawn);
 	}
 
-	/*
-	 * In this method i pass an abstraction, the interface "ITeleportable". This allows me to use only this method for
-	 * every object that can be teleported, implementing the defferents behaviors in each one of them separately.
-	 * In this way if i want to add a new teleportable objcet all i would have to do would be implementing the ITeleportable interface
-	 * in this objcet. In this specific game if i want the projectile to be able to teleport when it hits a teleport on the map
-	 * all that i need to do is implementing ITeleportable in the Projectile.cs and call this method,
-	 * respecting so the Open/Close principle.
-	 */
 	public void Teleport(ITeleportable teleportable) {
 		float randomSpawnX;
 		float randomSpawnY;
