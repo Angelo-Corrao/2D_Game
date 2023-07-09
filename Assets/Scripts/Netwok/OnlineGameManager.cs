@@ -48,7 +48,8 @@ public class OnlineGameManager : NetworkBehaviour {
 	[HideInInspector]
 	public bool isPlayerAlive = true;
 	[HideInInspector]
-	public bool hasMatchEnded = false;
+	public NetworkVariable<bool> hasMatchEnded = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone,
+		NetworkVariableWritePermission.Owner);
 	[HideInInspector]
 	public SerializableMatrix<bool> visitedCells = new SerializableMatrix<bool>();
 	[HideInInspector]
@@ -62,6 +63,8 @@ public class OnlineGameManager : NetworkBehaviour {
 	private OnlineCarController carController;
 	private NetworkList<NetworkObjectReference> wells = new NetworkList<NetworkObjectReference>();
 	private NetworkList<NetworkObjectReference> teleports = new NetworkList<NetworkObjectReference>();
+	private NetworkVariable<int> winningPlayer = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone,
+		NetworkVariableWritePermission.Owner);
 
 	private void Awake() {
 		if (Instance == null)
@@ -148,13 +151,28 @@ public class OnlineGameManager : NetworkBehaviour {
 			}
 		}
 
+		if (hasMatchEnded.Value) {
+			if (IsServer) {
+				if (winningPlayer.Value == 1)
+					victoryUI.gameObject.SetActive(true);
+				else
+					gameOverUI.gameObject.SetActive(true);
+			}
+			else if (winningPlayer.Value == 2)
+				victoryUI.gameObject.SetActive(true);
+			else
+				gameOverUI.gameObject.SetActive(true);
+		}
+
 		// When the the last projectile is shot check until there is no projectile on the map, than is Game Over
 		if (checkActiveProjectiles) {
 			if (activeProjectiles.Count == 0) {
 				checkActiveProjectiles = false;
 				// With this is possible to win killing the enemy with the last projectile
-				if (isEnemyAlive)
-					GameOver();
+				if (isEnemyAlive) {
+					ChangeActivePlayerServerRpc();
+					GameOverServerRpc();
+				}
 			}
 		}
 	}
@@ -177,7 +195,7 @@ public class OnlineGameManager : NetworkBehaviour {
 		 * If the player comes back to main menu after the game end (Victory or Game Over) delete the save file
 		 * so he can't click the continue button
 		 */
-		if (!hasMatchEnded)
+		if (!hasMatchEnded.Value)
 			DataPersistenceManager.Instance.SaveGame();
 		else
 			FileDataHandler.Instance.Delete(Path.Combine(Application.persistentDataPath, DataPersistenceManager.Instance.fileName));
@@ -202,21 +220,6 @@ public class OnlineGameManager : NetworkBehaviour {
 		Cursor.lockState = CursorLockMode.Locked;
 		unpausedSnapshot.TransitionTo(0f);
 		Time.timeScale = 1;
-	}
-
-	public void PlayAgain() {
-		DataPersistenceManager.Instance.isNewGame = true;
-		isGamePaused = false;
-		Time.timeScale = 1;
-		switch (MainMenuManager.Instance.gameMode) {
-			case GameMode.STANDARD:
-				SceneManager.LoadScene(1);
-				break;
-
-			case GameMode.PROCEDURAL:
-				SceneManager.LoadScene(2);
-				break;
-		}
 	}
 
 	public void SetCanPause(bool value) {
@@ -578,21 +581,31 @@ public class OnlineGameManager : NetworkBehaviour {
 			fogOfWar.SetTile(enemyGridPosition, null);
 	}
 
-	public void Victory() {
+	[ServerRpc(RequireOwnership = false)]
+	public void VictoryServerRpc() {
 		canPause = false;
-		hasMatchEnded = true;
-		victoryUI.gameObject.SetActive(true);
+		hasMatchEnded.Value = true;
+
+		if (activePlayer.Value == 1)
+			winningPlayer.Value = 1;
+		else
+			winningPlayer.Value = 2;
+
 		Cursor.lockState = CursorLockMode.None;
 		isGamePaused = true;
-		Time.timeScale = 0;
 	}
 
-	public void GameOver() {
+	[ServerRpc(RequireOwnership = false)]
+	public void GameOverServerRpc() {
 		canPause = false;
-		hasMatchEnded = true;
-		gameOverUI.gameObject.SetActive(true);
+		hasMatchEnded.Value = true;
+
+		if (activePlayer.Value == 1)
+			winningPlayer.Value = 2;
+		else
+			winningPlayer.Value = 1;
+
 		Cursor.lockState = CursorLockMode.None;
 		isGamePaused = true;
-		Time.timeScale = 0;
 	}
 }

@@ -210,7 +210,7 @@ public class OnlineProjectile : MonoBehaviour {
 		if (collision.gameObject.CompareTag("Player")) {
 			AudioManager.Instance.PlaySFX("Dead");
 			OnlineGameManager.Instance.isPlayerAlive = false;
-			OnlineGameManager.Instance.GameOver();
+			OnlineGameManager.Instance.GameOverServerRpc();
 			Destroy(OnlineGameManager.Instance.player);
 		}
 
@@ -219,7 +219,7 @@ public class OnlineProjectile : MonoBehaviour {
 			AudioManager.Instance.PlaySFX("Win");
 			OnlineGameManager.Instance.isEnemyAlive = false;
 			if (OnlineGameManager.Instance.isPlayerAlive)
-				OnlineGameManager.Instance.Victory();
+				OnlineGameManager.Instance.VictoryServerRpc();
 			OnlineGameManager.Instance.DestroyEnemyServerRpc();
 		}
 

@@ -62,8 +62,13 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 	}
 
 	private void Update() {
-		if (OnlineGameManager.Instance.isMatchStarted.Value)
-			CheckTurn();
+		if (!OnlineGameManager.Instance.hasMatchEnded.Value) {
+			if (OnlineGameManager.Instance.isMatchStarted.Value)
+				CheckTurn();
+		}
+		else {
+			playerTurn.gameObject.SetActive(false);
+		}
 
 		InCurveBehaviour();
 		if (hasToTeleport) {
@@ -322,7 +327,8 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 				road.GetTile(actualGridPosition).name != "roadSW") {
 				checkCurve = false;
 				// Change player turn only if he's not in a curve
-				OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
+				if (!OnlineGameManager.Instance.hasMatchEnded.Value)
+					OnlineGameManager.Instance.ChangeActivePlayerServerRpc();
 				hasAlreadyMove = false;
 			}
 		}
@@ -332,7 +338,7 @@ public class OnlineCarController : NetworkBehaviour, ITeleportable{
 		if (collision.gameObject.CompareTag("Enemy") || collision.gameObject.CompareTag("Well")) {
 			AudioManager.Instance.PlaySFX("Dead");
 			OnlineGameManager.Instance.isPlayerAlive = false;
-			OnlineGameManager.Instance.GameOver();
+			OnlineGameManager.Instance.GameOverServerRpc();
 			Destroy(gameObject);
 		}
 
