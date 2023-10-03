@@ -1,4 +1,4 @@
-# Nacon-Test
+# 2D GAME
 
 I made this project in 2D and I implemented every point (1 to 5 plus extras). The procedural map is generated with tunnels and to
 implement it I used the Wave Function Collapse algorithm. To implement the online PvP I used "Netcode for GameObjects", the unity's
