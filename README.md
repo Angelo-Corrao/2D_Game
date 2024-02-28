@@ -1,6 +1,6 @@
 # 2D GAME
 
-## What it is?
+## What it is
 This is a 2D game made in unity based in a 20x20 grid where each cell is hidden by the fog of war.
 The player is able to move, with "WASD", one cell at time and each time he moves to a new cell it will be
 discovered from the fog of war, the player also has 5 projectile that he can shoots with "IJKL". Both the Player and
@@ -13,7 +13,7 @@ without killing the monster. Besides the monster there are also other two elemen
 the wells, that will kill the player if he moves to a cell with one of them, and the teleports 
 that will move the player to a random cell where is not present nether the monster, a well or a teleport.
 As a hint for the player the game will show an interface for the monster, one for the well and on for 
-the teleport if one of them is in a cell adjacent to one where the player currently is.
+the teleport if one of them is in a cell adjacent to the one where the player currently is.
 
 ## Modes
 In this game there are three modes:

@@ -41,7 +41,7 @@ public class GameManager : MonoBehaviour, IDataPersistence
 	[HideInInspector]
 	public bool canPause = true;
 	[HideInInspector]
-	public bool isGamePaused = false; // Used to block player's input when the game is in paused
+	public bool isGamePaused = false; // Used to block player's input when the game is in pause
 	[HideInInspector]
 	public bool isEnemyAlive = true;
 	[HideInInspector]

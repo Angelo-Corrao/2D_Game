@@ -817,7 +817,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: NACON TEST
+  m_Text: 2D GAME
 --- !u!222 &275836212
 CanvasRenderer:
   m_ObjectHideFlags: 0

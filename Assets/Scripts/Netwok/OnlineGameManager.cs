@@ -40,7 +40,7 @@ public class OnlineGameManager : NetworkBehaviour {
 	[HideInInspector]
 	public NetworkVariable<NetworkObjectReference> enemy = new NetworkVariable<NetworkObjectReference>();
 	[HideInInspector]
-	public bool isGamePaused = false; // Used to block player's input when the game is in paused
+	public bool isGamePaused = false; // Used to block player's input when the game is in pause
 	[HideInInspector]
 	public bool isEnemyAlive = true;
 	[HideInInspector]
